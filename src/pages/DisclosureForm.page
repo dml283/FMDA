@@ -1,0 +1,86 @@
+<apex:page standardController="Disclosure_Claim_for_Payment__c" extensions="DisclosureFormController" tabstyle="Disclosure_Claim_for_Payment__c">
+    <apex:form >
+        <apex:sectionHeader subtitle="New Disclosure"/>
+        
+        <apex:pageMessages escape="false"></apex:pageMessages>
+        <apex:pageBlock title="New Disclosure" mode="edit">
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!Save}" value="Save"/>
+                <!--<apex:commandButton action="{!SaveAndNew}" value="Save & New"/>-->
+                <apex:commandButton action="{!Cancel}" value="Cancel"/>
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="Information" columns="1" rendered="{!!isEdit}">
+                <apex:outputPanel >
+                    {!Labels['DisclosureForm.Information'].Content__c}
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="Information" columns="2" rendered="{!isEdit}">
+                <apex:outputField value="{!Entity.Name}"/>
+                <apex:outputField value="{!Entity.OwnerId}"/>
+                <apex:inputField value="{!Entity.Stakeholder__c}"/>
+                <apex:outputField value="{!Entity.RecordtypeId}"/>
+                <apex:inputField value="{!Entity.Disclosure_Obligation__c}"/>
+                <apex:inputField value="{!Entity.Status__c}"/>
+                <apex:outputField value="{!Entity.Cloned_Disclosure_Claim_for_Payment__c}"/>
+                <apex:outputField value="{!Entity.Active__c}"/>
+                <apex:outputText value=""/>
+                <apex:outputField value="{!Entity.Version_Number__c}"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Disclosure Details" rendered="{!!isEdit}">
+                <apex:outputField value="{!Entity.Stakeholder__c}"/>
+                <apex:outputField value="{!Entity.OwnerId}"/>
+                <apex:outputField value="{!Entity.Disclosure_Obligation__c}"/>
+                <apex:outputField value="{!Entity.RecordTypeId}"/>
+                <apex:inputField value="{!Entity.Status__c}"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Disclosure Period">
+                <apex:inputField value="{!Entity.Disclosure_Period_Commences__c}"/>
+                <apex:inputField value="{!Entity.Disclosure_Period_Ends__c}"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Official/Party Agent Information" rendered="{!!IsMajorPoliticalDonor}">
+                <apex:pageBlockSectionItem rendered="{!!isEdit}" helptext="{!$ObjectType.Disclosure_Claim_for_Payment__c.Fields.Official_Agent__c.InlineHelpText}">
+                    <apex:outputText value="Official/Party Agent"/>
+                    <apex:outputField value="{!Entity.Official_Agent__c }"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!isEdit}" helptext="{!$ObjectType.Disclosure_Claim_for_Payment__c.Fields.Official_Agent__c.InlineHelpText}">
+                    <apex:outputText value="Official/Party Agent"/>
+                    <apex:inputField value="{!Entity.Official_Agent__c }"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Disclosure_Claim_for_Payment__c.Fields.Signed_By_Official_Agent_Date__c.InlineHelpText}">
+                    <apex:outputText value="Signed By Official/Party Agent"/>
+                    <apex:inputField value="{!Entity.Signed_By_Official_Agent_Date__c}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Disclosure_Claim_for_Payment__c.Fields.Signed_By_Official_Agent__c.InlineHelpText}">
+                    <apex:outputText value="Signed By Official/Party Agent"/>
+                    <apex:inputField value="{!Entity.Signed_By_Official_Agent__c}"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Political Donor Information" rendered="{!IsMajorPoliticalDonor}">
+                    <apex:inputField value="{!Entity.Signed_by_Political_Donor__c }"/>
+                    <apex:inputField value="{!Entity.Signed_by_Political_Donor_Date__c }"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Auditor Information" rendered="{!!IsMajorPoliticalDonor}">
+                <apex:inputField value="{!Entity.Auditor_Name__c}"/>
+                <apex:inputField value="{!Entity.Auditor_Registration_Number__c}"/>
+                <apex:inputField value="{!Entity.Signed_by_Auditor__c}"/>
+                <apex:inputField value="{!Entity.Signed_by_Auditor_Date__c}"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Administrative Information">
+                <apex:inputField value="{!Entity.Received_By__c}"/>
+                <apex:inputField value="{!Entity.Date_Received__c}"/>
+                <!--<apex:inputField value="{!Entity.Checked_By__c}" rendered="{!isEdit}"/>
+                <apex:inputField value="{!Entity.Date_Checked__c}" rendered="{!isEdit}"/> -->
+                <apex:inputField value="{!Entity.Checked_By__c}"/>
+                <apex:inputField value="{!Entity.Date_Checked__c}"/>
+                
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

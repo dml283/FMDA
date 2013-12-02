@@ -1,0 +1,60 @@
+<apex:page standardController="Vouched_Line_Item__c" extensions="ReviewVouchingStatusTRIMRecordController">
+    <apex:messages />
+    <apex:form >
+        <apex:repeat value="{!lineItemTypeWrap}" var="litWrap">
+            <apex:pageBlock title="{!Labels[litWrap.lit.Line_Item_Category__r.Reference_Number__c].Content__c}" mode="edit">
+                <p>
+                	{!Labels[litWrap.lit.Line_Item_Category__r.Reference_Number__c].Content__c}
+            	</p><br/>
+                
+                <apex:pageBlockSection columns="2">
+                    <apex:outputField value="{!litWrap.lit.Nil_Disclosure_Claim_for_Payment__c}" />
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputPanel rendered="{!litWrap.LineItemPagingInfo.TotalCount > 5}"> 
+                            Record per page&nbsp;&nbsp;
+                            <apex:selectList label="Record per page " size="1" value="{!litWrap.LineItemPagingInfo.PageSize}" onchange="return ReloadLitTableJS('{!litWrap.lit.Id}');">
+                                <apex:selectOptions value="{!numberItemPerPageOptions}"/>
+                            </apex:selectList>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+            	</apex:pageBlockSection>
+                <div id="{!litWrap.lit.Id}" style="width:100%;max-width:100%;overflow:auto;" >
+                	<apex:pageBlockTable var="lineItem" value="{!litWrap.liList}" style="width:100%" >
+                        <apex:repeat var="f" value="{!MapLineItemFieldSets['X' + litWrap.lit.Line_Item_Category__r.Reference_Number__c].Fields}">
+                            <apex:column >
+                                <apex:facet name="header">
+                                    <apex:outputPanel >
+                                        <apex:commandLink action="{!litWrap.Sort}" rerender="pnlForm" status="overlayStatus"
+                                        value="{!f.label} {!IF(litWrap.LineItemPagingInfo.OrderBy != f.FieldPath, '', IF(litWrap.LineItemPagingInfo.OrderDirection == 'ASC', '▲', '▼'))}">
+                                            <apex:param name="sortByColumn" value="{!f.FieldPath}" />
+            								<apex:param name="sortDirection" value="{!IF(litWrap.LineItemPagingInfo.OrderBy != f.FieldPath, 'ASC', IF(litWrap.LineItemPagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                        </apex:commandLink>
+                                        <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </apex:outputPanel>
+                                </apex:facet>
+                                <apex:outputField value="{!lineItem.Item[f]}" styleclass="f-{!f.FieldPath}" />
+                            </apex:column>
+                    	</apex:repeat>
+                        
+                        <apex:column >
+                            <apex:facet name="header">Status</apex:facet>
+                            <apex:outputField value="{!lineItem.Item.Line_Item_Status_Formula__c}"/>
+                    	</apex:column>
+                    </apex:pageBlockTable>
+                </div>
+                <p>
+                	<c:Pagination pager="{!litWrap.LineItemPagingInfo}" action="{!litWrap.QueryLineItemTypes}" rerender="pnlForm" status="overlayStatus" />
+            	</p>
+                <!--<apex:pageBlockSection >
+                    <apex:outputField value="{!litWrap.lit.Calculated_Amount__c}" rendered="{!litWrap.lit.Line_Item_Category__r.Calculated_Total_Amount__c}"/>
+                    <apex:outputField value="{!litWrap.lit.Form_Amount__c}" rendered="{!litWrap.lit.Line_Item_Category__r.Form_Total_Amount__c}"/>
+                    <apex:outputField value="{!litWrap.lit.Calculated_Count__c}" rendered="{!litWrap.lit.Line_Item_Category__r.Calculated_Total_Count__c}"/>
+                    <apex:outputField value="{!litWrap.lit.Form_Count__c}" rendered="{!litWrap.lit.Line_Item_Category__r.Form_Total_Count__c}"/>
+            	</apex:pageBlockSection>-->
+            </apex:pageBlock>
+        </apex:repeat>
+    </apex:form>
+</apex:page>

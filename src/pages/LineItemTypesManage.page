@@ -1,0 +1,86 @@
+<apex:page standardController="Disclosure_Claim_for_Payment__c" extensions="LineItemTypeManageController" tabstyle="Disclosure_Claim_for_Payment__c">
+    <c:CommonScripts ></c:CommonScripts>
+    <style type="text/css">
+        .pbTitle{width:1px!important;white-space:nowrap;}
+        .paginator{vertical-align:top}
+        .ddl-lit{font-size: 110%;!important}
+    </style>
+    <script type="text/javascript">
+    $(function(){
+    	//getLineItemTypes();
+        resizeIframe();
+        $(window).bind('resize', resizeIframe);
+        ddlLitOnChange();
+    });
+
+    function getLineItemTypes(){
+    	var lineItemTypes = sforce.connection.query("SELECT Id, Name, Line_Item_Category__r.Line_Item_Category__c FROM Line_Item_Type__c WHERE Disclosure_Claim_for_Payment__c = '{!Disclosure_Claim_for_Payment__c.Id}' AND Line_Item_Category__c != null ORDER BY Order_Number__c").getArray('records');        
+        var lineItems;
+        var typeStr;
+        var typeId;
+        $.each(lineItemTypes, function(i, e){
+            //alert(e.Line_Item_Category__r.Line_Item_Category__c);
+            typeStr = e.Line_Item_Category__r.Line_Item_Category__c;
+            typeId = e.Id;
+            if(typeStr == 'Small Political Donations Received General (Not received at a Fundraising Function or Venture)'
+              || typeStr == 'Electoral Expenditure Other'
+              || typeStr == 'Small Political Donations Made'){
+                lineItems = sforce.connection.query("SELECT Calculated_Audit_Count__c, Calculated_Count__c FROM Line_Item_Type__c WHERE Id = '" + typeId + "'");
+                var it = new sforce.QueryResultIterator(lineItems);
+                while(it.hasNext()) {
+                   var record = it.next();
+                    if(record.Calculated_Count__c > 0){
+                        $('#ddl-lit').append('<option style="color:green" value="' + e.Id + '">' + e.Line_Item_Category__r.Line_Item_Category__c +'</option>')
+                    }else{
+                        $('#ddl-lit').append('<option style="color:red" value="' + e.Id + '">' + e.Line_Item_Category__r.Line_Item_Category__c +'</option>')
+                    } 
+                }
+            }else{
+                lineItems = sforce.connection.query("SELECT COUNT() FROM Line_Item__c WHERE Line_Item_Type__c = '" + e.Id + "' AND RecordType.Name = 'Line Item'");
+                if(lineItems.size > 0){
+                    $('#ddl-lit').append('<option style="color:green" value="' + e.Id + '">' + e.Line_Item_Category__r.Line_Item_Category__c +'</option>')
+                }else{
+                    $('#ddl-lit').append('<option style="color:red" value="' + e.Id + '">' + e.Line_Item_Category__r.Line_Item_Category__c +'</option>')
+                }
+            }
+		});
+    }
+    
+    function resizeIframe(){
+        //var height = $(window).height();
+        for(var i=0; i<1000; i++){
+            $('#lit-frame').attr('height', ($(window).height()-i*15) + 'px');
+            if($(document).height() <= $(window).height()){
+                return;
+            }
+        }
+    }
+    
+    function ddlLitOnChange(){
+        if($('#ddl-lit').val() == null ){ 
+            $('#lit-frame').attr('src', 'about:blank'); return; 
+        } 
+        $('#img-loading').show(); 
+        $('#lit-frame').attr('src', '/apex/lineitemform?id=' + $('#ddl-lit').val() + '&isdtp=vw'); 
+    }
+    </script>
+    <apex:form >
+        <apex:sectionHeader title="Disclosure/Claim for Payment" subtitle="{!Entity.Name}" rendered="{!$CurrentPage.Parameters.Inline != '1'}"/>
+        
+        <apex:pageBlock mode="edit" title="Line Item Type">
+            <apex:pageBlockButtons location="top">
+                <apex:outputLabel >
+                	<select id="ddl-lit" onchange="ddlLitOnChange()">
+                		<apex:repeat value="{!SelectOptionList}" var="Opt">
+                			<option style="{!Opt.color}" value="{!Opt.Id}">{!Opt.Text}</option>
+                		</apex:repeat>
+                    </select>
+                    <img src="/img/loading.gif" id="img-loading" alt="Loading...."/>
+                </apex:outputLabel>
+                <apex:commandButton value="Back" onclick="top.window.location.href = '/{!Entity.Id}'; return false;" style="float:right" rendered="{!$CurrentPage.Parameters.Inline != '1'}"/>
+            </apex:pageBlockButtons>
+            <iframe id="lit-frame" src="" width="100%" height="100%" style="border:none;margin-bottom:1px;" onload="$('#img-loading').hide()"/>
+            
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

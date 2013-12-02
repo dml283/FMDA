@@ -1,0 +1,380 @@
+<apex:page standardController="Party_Agent_Appointment__c" extensions="PartyAgentAppointmentController" 
+			showHeader="false">
+<!--<apex:page Controller="PartyAgentAppointmentController" showHeader="false">-->
+    <script>
+        $(function(){
+            sforce.connection.sessionId = '{!GETSESSIONID()}';
+        	initAccountLookup();
+        })
+        function initAccountLookup(){
+            $('a.f-AccountId').unbind('click');
+        	$('a.f-AccountId').click(function(e){
+        		openCustomLookup("PersonSearch", this); e.preventDefault(); return false;
+        	});       
+        }
+        function onAjaxStop(){
+        	initAccountLookup();
+        }
+    	function validateActiveAgent(Name, Status, PoliticalParty) {
+            // Get Active
+            var activeParty = sforce.connection.query("SELECT Id, Name FROM Party_Agent_Appointment__c WHERE Political_Party__c = '" + PoliticalParty + "'" + 
+                                                      " And Status__c='Active' And Name !='" + Name + "' LIMIT 1").getArray("records");
+            if ((activeParty.length > 0) && (Status == "Active")  ) {
+                if(confirm("{!Labels['PartyAgentApp.Msg.1ActiveAgent'].Content__c}")){
+                    return true;
+                }
+                else{
+                    return false;
+                }
+            }
+            return true;
+        }
+    	function validateMainSection(){
+            var partyAgent = $('input.f-Party_Agent__c').parents('div.requiredInput').children().length == 0 ? $('input.f-Party_Agent__c') : $('input.f-Party_Agent__c').parents('div.requiredInput').children().eq(1);
+            return validateActiveAgent($('span.f-Name').text(),$('select.f-Status__c').val(),partyAgent.val());
+        }
+                
+		function openOnlineTrainingValidation(fadmsId) {
+			if (fadmsId == null || fadmsId=='') {
+				alert('Current user does not have a FADMS Id');
+				return;
+			}
+			var url = '/apex/OnlineTrainingValidation?isdtp=vw&fadmsId=' + fadmsId;
+			window.open(url, '_blank' , 'width=800,height=600,scrollbars=1,center=1');
+		}
+		
+		function reloadOnlineTrainingSection() {
+			updateOnlineTrainingDetails();
+		}
+                
+    //HanhLuu:US5352:Start
+    function AgentStatusChange(){
+    	if($('select.f-Status__c').val().indexOf('Pending') != -1){ 
+	    	$('input.f-Date_From__c').attr("value",'');
+	    	$('input.f-Date_From__c').attr("disabled",true);
+	    	
+	    	$('input.f-Date_To__c').attr("value",'');
+	    	$('input.f-Date_To__c').attr("disabled",true);
+    	}
+    	else{
+	    	$('input.f-Date_From__c').attr("disabled",false);
+	    	$('input.f-Date_To__c').attr("disabled",false);    	
+    	}
+    	
+    	//alert('AgentStatusChange');
+    }
+    
+    function InlineAgentStatusChange(){
+    	if($('select.inlinef-Status__c').val().indexOf('Pending') != -1){ 
+	    	$('input.inlinef-Date_From__c').attr("value",'');
+	    	$('input.inlinef-Date_From__c').attr("disabled",true);
+	    	
+	    	$('input.inlinef-Date_To__c').attr("value",'');
+	    	$('input.inlinef-Date_To__c').attr("disabled",true);
+    	}
+    	else{
+	    	$('input.inlinef-Date_From__c').attr("disabled",false);
+	    	$('input.inlinef-Date_To__c').attr("disabled",false);    	
+    	}    	
+    }
+    //HanhLuu:US5352:End                
+                
+    </script>
+    <c:CommonScripts />    
+    <c:Overlay />
+    
+    <apex:form id="myForm">
+        
+        <apex:sectionHeader title="Party Agent Appointment" subtitle="New Party Agent Appointment" id="header"/>     
+        <apex:pageMessages escape="false" id="message" />
+        
+        <apex:pageBlock title="Party Agent Appointment" mode="edit" id="partyAgentDetails">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Create New" action="{!CreateNew}" onclick="if (!validateMainSection()) return false;"
+                	rendered="{!hasRecord}" rerender="myForm" status="overlayStatus" />
+                <apex:commandButton value="Quick Save" action="{!QuickSave}" onclick="if (!validateMainSection()) return false;" rerender="myForm" status="overlayStatus"/>
+                <apex:commandButton value="Save" action="{!Save}" onclick="if (!validateMainSection()) return false;"/>
+                <apex:commandButton value="Cancel" action="{!Cancel}" immediate="true" />
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="Information" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['PartyAgentApp.Information'].Content__c}</apex:outputPanel>
+            </apex:pageBlockSection>
+            
+            <!-- party details -->
+            <apex:pageBlockSection title="Party Details" columns="1">
+                <!--<apex:outputPanel styleClass="helptext">{!Labels['PartyAgentApp.PartyDetails'].Content__c}</apex:outputPanel>-->
+            </apex:pageBlockSection>
+            
+            <apex:actionRegion >
+                <apex:actionFunction name="updatePoliticalParty" action="{!updatePoliticalParty}" rerender="myForm" status="overlayStatus"/>
+	            <apex:pageBlockSection showheader="false" columns="2">
+	                <apex:pageBlockSectionItem helptext="{!$ObjectType.Party_Agent_Appointment__c.Fields.Political_Party__c.InlineHelpText}">
+	                    <apex:outputLabel value="Political Party:" />
+	                    <apex:outputPanel style="white-space:nowrap">
+<!-- hanhluu:US5352             <apex:inputField value="{!partyAgentApp.Political_Party__c}" onchange="updatePoliticalParty();" /> -->
+								<apex:outputField value="{!partyAgentApp.Political_Party__c}" />
+		                        <input type="hidden" value="{!partyAgentApp.Political_Party__c}" class="f-Party_Agent__c" />
+	                    </apex:outputPanel>
+	                </apex:pageBlockSectionItem>
+	                <apex:pageBlockSectionItem >
+	                    <apex:outputLabel value="Party Agent:" />
+	                    <apex:outputPanel style="white-space:nowrap">
+	                        <apex:outputText value="{!PartyAgent}" />
+	                    </apex:outputPanel>
+	                </apex:pageBlockSectionItem>
+	                <apex:pageBlockSectionItem >
+	                    <apex:outputLabel value="Registered Officer:" />
+	                    <apex:outputPanel style="white-space:nowrap">
+	                        <apex:outputText value="{!RegisteredOfficer}" />
+	                    </apex:outputPanel>
+	                </apex:pageBlockSectionItem>
+	            </apex:pageBlockSection>
+            </apex:actionRegion>
+            
+            <apex:actionRegion >
+                
+        	<apex:actionFunction name="updateOnlineTrainingDetails" action="{!updateOnlineTrainingDetails}" rerender="partyAgentDetails" status="overlayStatus"/>
+        	
+            <apex:pageBlockSection title="Party Agent Details" columns="2">
+                <!--
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Party Agent Appointment Number: " />
+                    <apex:outputPanel  style="white-space:nowrap">
+                        <apex:outputText value="{!partyAgentApp.Name}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Status:" />
+                    <apex:outputPanel  style="white-space:nowrap">
+                        <apex:inputField value="{!partyAgentApp.Status__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Date From:" />
+                    <apex:outputPanel  style="white-space:nowrap">
+                        <apex:inputField value="{!partyAgentApp.Date_From__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Date To:" />
+                    <apex:outputPanel  style="white-space:nowrap">
+                        <apex:inputField value="{!partyAgentApp.Date_To__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                -->
+                <apex:inputField value="{!partyAgentApp.Name}" styleClass="f-Name"/>
+                <apex:inputField value="{!partyAgentApp.Status__c}" styleClass="f-Status__c" onchange="AgentStatusChange();"/>
+                <apex:inputField value="{!partyAgentApp.Date_From__c}" styleClass="f-Date_From__c" />
+                <apex:inputField value="{!partyAgentApp.Date_To__c}" styleClass="f-Date_To__c" />
+            </apex:pageBlockSection>
+            <apex:pageBlockSection showheader="false" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['PartyAgentApp.PartyAgentDetails1'].Content__c}</apex:outputPanel>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection showheader="false" columns="2">
+             <!-- 	
+ 				<apex:pageBlockSectionItem> 
+                    <apex:outputPanel >
+                        <apex:inputField value="{!partyAgentApp.Party_Agent__c}" styleclass="f-AccountId"
+                        onChange="updateOnlineTrainingDetails();" rendered="{!NOT(isRegisterOfficerActing)}"/>
+                        <apex:outputField value="{!partyAgentApp.Party_Agent__c}" rendered="{!(isRegisterOfficerActing)}"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem> 
+                <apex:actionRegion >
+                    <apex:actionFunction name="updatePartyAgent" action="{!updatePartyAgent}" rerender="partyAgentDetails" status="overlayStatus"/>
+                    <apex:pageBlockSectionItem > 
+                        <apex:outputText value="Registered Officer acting as Party Agent:" />
+                        <apex:inputCheckbox value="{!isRegisterOfficerActing}" onclick="updatePartyAgent();"/>
+                    </apex:pageBlockSectionItem>
+                </apex:actionRegion>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.Party_Agent_Appointment__c.Fields.Party_Agent__c.InlineHelpText}"> 
+				-->
+               
+                
+<!--                  <apex:inputField value="{!partyAgentApp.Party_Agent__c}" styleclass="f-AccountId" -->
+<!--                  onChange="updateOnlineTrainingDetails();" rendered="{!NOT(isRegisterOfficerActing)}"/> -->
+<!-- 				  <apex:outputField value="{!partyAgentApp.Party_Agent__c}" rendered="{!isRegisterOfficerActing}"/>  -->
+                
+                 <apex:inputField value="{!partyAgentApp.Party_Agent__c}" styleclass="f-AccountId"
+                 onChange="updateOnlineTrainingDetails();" rendered="{!NOT(isEdit)}"/>
+                 <apex:outputField value="{!partyAgentApp.Party_Agent__c}" rendered="{!isEdit}"/>               
+                 <apex:inputField value="{!partyAgentApp.Date_Signed_By_Party_Agent__c }" />
+                 <apex:inputCheckbox label="Registered Officer acting as Party Agent:" value="{!isRegisterOfficerActing}" onclick="updatePartyAgent();"/>
+                 <apex:inputField value="{!partyAgentApp.Confirm_Signed_By_Party_Agent__c }" />                 
+                 <apex:actionFunction name="updatePartyAgent" action="{!updatePartyAgent}" rerender="partyAgentDetails" status="overlayStatus"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection showheader="false" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['PartyAgentApp.PartyAgentDetails2'].Content__c}</apex:outputPanel>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection showheader="false" columns="2">
+            	<apex:inputField value="{!partyAgentApp.Name_of_Party_Official__c}" />
+                <apex:inputField value="{!partyAgentApp.Position_of_Party_Official__c}" />
+                
+            	<apex:inputField value="{!partyAgentApp.Confirm_Signed_By_Party_Official__c}" />
+                <apex:inputField value="{!partyAgentApp.Date_Signed_By_Party_Official__c}" />
+                <apex:inputField value="{!partyAgentApp.Received_By__c}" />
+                <apex:inputField value="{!partyAgentApp.Date_Received__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Online Training Details" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['PartyAgentApp.OnlineTrainingDetails'].Content__c}</apex:outputPanel>
+            </apex:pageBlockSection>
+                
+           <apex:pageBlockSection showHeader="false" columns="1">
+               <apex:outputPanel >
+                   <div style="margin-left:40%;" >
+                       <apex:commandButton value="Validate Online Training" onClick="openOnlineTrainingValidation('{!onlinePartyAgent.FADMS_Elector_ID__c}');return false;"/>
+                   </div>
+               </apex:outputPanel>
+           </apex:pageBlockSection>
+                
+            <apex:pageBlockSection showHeader="false" columns="2" id="pbs-otd">
+                <apex:outputField value="{!onlinePartyAgent.Training_Status__c}" />
+                <apex:outputField value="{!onlinePartyAgent.Online_Training_Status__c}" />
+                <apex:outputField value="{!onlinePartyAgent.Online_Training_Attempt_Count__c}" />
+                <apex:inputField value="{!onlinePartyAgent.CPA_Membership_Number__c}" />
+                <apex:inputField value="{!onlinePartyAgent.ICAA_Membership_Number__c}" />
+                <apex:inputField value="{!onlinePartyAgent.IPA_Membership_Number__c}" />
+            </apex:pageBlockSection>			
+                
+            </apex:actionRegion>
+        </apex:pageBlock>
+        
+        <apex:actionRegion >
+        <!--<apex:actionFunction name="sortData" action="{!sortData}" rerender="partyAgentTable" focus="partyAgentTable" status="overlayStatus">
+            <apex:param name="sortByColumn" value="" assignTo="{!sortByColumn}"/> 
+        </apex:actionFunction>-->
+		<apex:actionFunction name="updateTrainingStatus" action="{!updateTrainingStatus}" rerender="partyAgentTable" status="overlayStatus">
+            <apex:param name="editid" value="" assignTo="{!editid}"/>
+        </apex:actionFunction>
+
+		<apex:pageBlock mode="edit" title="Party Agent Appointments" id="partyAgentTable">
+			<apex:pageMessages ></apex:pageMessages>
+			<apex:pageBlockTable value="{!PartyAgentWrapper}" var="pAgentWrapper">
+                
+				<apex:column >
+					<apex:facet name="header"></apex:facet>
+					<apex:outputPanel rendered="{!pAgentWrapper.Id != partyAgentApp.Id}">
+						<apex:outputPanel rendered="{!pAgentWrapper.isEdited}">
+							<apex:commandLink styleClass="customlinkInTable" action="{!saveRow}" 
+								rerender="myForm" status="overlayStatus" onclick="
+								var partyAgent = $('input.f-Party_Agent__c').parents('div.requiredInput').children().length == 0 ? $('input.f-Party_Agent__c') : $('input.f-Party_Agent__c').parents('div.requiredInput').children().eq(1);
+								if (!validateActiveAgent($(this).parents('tr').find('.inlinef-Name').text(),$(this).parents('tr').find('.inlinef-Status__c').val() , partyAgent.val())) return false;">Save
+									<apex:param name="editid" value="{!pAgentWrapper.id}" />
+							</apex:commandLink>
+							|&nbsp;
+							<apex:commandLink styleClass="customlinkInTable" action="{!cancelRow}" 
+								rerender="partyAgentTable" status="overlayStatus" >Cancel  
+								<apex:param name="editid" value="{!pAgentWrapper.id}"/>
+							</apex:commandLink>
+						</apex:outputPanel>
+						
+						<apex:outputPanel rendered="{!NOT(pAgentWrapper.isEdited)}">  
+							<apex:commandLink action="{!editRow}" rerender="partyAgentTable" 
+								status="overlayStatus" styleClass="customlinkInTable" >Edit
+								<apex:param name="editid" value="{!pAgentWrapper.id}"/>
+							</apex:commandLink>
+							|&nbsp;
+							<apex:commandLink styleClass="customlinkInTable,inlinef-Name" action="{!delRow}" rerender="myForm" 
+								status="overlayStatus" immediate="true" >Del
+								<apex:param name="delid" value="{!pAgentWrapper.id}"/>
+							</apex:commandLink>
+						</apex:outputPanel>
+					</apex:outputPanel>
+				</apex:column>
+				
+				<apex:column >
+					<apex:facet name="header">
+						<apex:outputPanel >
+						<apex:commandLink value="{!table.Column1_Name__c} {!IF(sortByColumn == table.Column1_Name__c,IF(orderAsc,'▲','▼'),'')}" action="{!sortData}" rerender="partyAgentTable" status="overlayStatus">
+                            <apex:param name="tableHeaderName" value="{!table.Column1_Name__c}"/>
+                        </apex:commandLink>
+                        <apex:outputText rendered="{!$ObjectType.Party_Agent_Appointment__c.Fields.Name.InlineHelpText != null}">
+                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Party_Agent_Appointment__c.Fields.Name.InlineHelpText}" alt="" src="/s.gif"/></span>
+                        </apex:outputText>
+                        </apex:outputPanel>
+					</apex:facet>
+					<apex:commandLink styleClass="customlinkInTable" action="{!editPartyAgent}" rerender="myForm" 
+						status="overlayStatus" rendered="{!NOT(pAgentWrapper.isEdited)}">{!pAgentWrapper.partyAgentApp.Name}
+						<apex:param name="editid" value="{!pAgentWrapper.partyAgentApp.Id}"/>
+					</apex:commandLink>
+					<apex:inputField value="{!pAgentWrapper.partyAgentApp.Name}" styleclass="inlinef-Name" rendered="{!pAgentWrapper.isEdited}"/>
+				</apex:column>
+				
+				<apex:column >
+					<apex:facet name="header">
+						<apex:outputPanel >
+							<apex:commandLink value="{!table.Column2_Name__c} {!IF(sortByColumn == table.Column2_Name__c,IF(orderAsc,'▲','▼'),'')}" action="{!sortData}" rerender="partyAgentTable" status="overlayStatus">
+	                            <apex:param name="tableHeaderName" value="{!table.Column2_Name__c}"/>
+							</apex:commandLink>
+	                        <apex:outputText rendered="{!$ObjectType.Party_Agent_Appointment__c.Fields.Party_Agent__c.InlineHelpText != null}">
+	                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Party_Agent_Appointment__c.Fields.Party_Agent__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+	                        </apex:outputText>
+                        </apex:outputPanel>
+					</apex:facet>
+                    <apex:outputField value="{!pAgentWrapper.partyAgentApp.Party_Agent__c}" rendered="{!NOT(pAgentWrapper.isEdited) || ( pAgentWrapper.isEdited && (pAgentWrapper.partyAgentApp.Status__c == 'Active'))}" />
+					<apex:inputField value="{!pAgentWrapper.partyAgentApp.Party_Agent__c}" styleclass="f-AccountId" 
+						rendered="{!pAgentWrapper.isEdited && pAgentWrapper.partyAgentApp.Status__c != 'Active'}" required="fasle"
+						onChange="updateTrainingStatus('{!pAgentWrapper.Id}');"/>
+				</apex:column>
+				
+				<apex:column >
+					<apex:facet name="header">
+						<apex:outputPanel >
+							<apex:commandLink value="{!table.Column3_Name__c} {!IF(sortByColumn == table.Column3_Name__c,IF(orderAsc,'▲','▼'),'')}" action="{!sortData}" rerender="partyAgentTable" status="overlayStatus">
+	                            <apex:param name="tableHeaderName" value="{!table.Column3_Name__c}"/>
+							</apex:commandLink>
+	                        <apex:outputText rendered="{!$ObjectType.Party_Agent_Appointment__c.Fields.Status__c.InlineHelpText != null}">
+	                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Party_Agent_Appointment__c.Fields.Status__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+	                        </apex:outputText>
+                        </apex:outputPanel>
+					</apex:facet>
+					<apex:outputField value="{!pAgentWrapper.partyAgentApp.Status__c}" styleclass="inlinef-Status__c" rendered="{!NOT(pAgentWrapper.isEdited)}"/>
+                    <apex:inputField value="{!pAgentWrapper.partyAgentApp.Status__c}" styleclass="inlinef-Status__c" rendered="{!pAgentWrapper.isEdited}" onchange="InlineAgentStatusChange();" />
+				</apex:column>
+				
+				<apex:column >
+					<apex:facet name="header">
+						<apex:commandLink value="{!table.Column4_Name__c} {!IF(sortByColumn == table.Column4_Name__c,IF(orderAsc,'▲','▼'),'')}" action="{!sortData}" rerender="partyAgentTable" status="overlayStatus">
+                            <apex:param name="tableHeaderName" value="{!table.Column4_Name__c}"/>
+						</apex:commandLink>
+					</apex:facet>
+					<apex:outputText value="{!pAgentWrapper.trainingStatus}"/>
+				</apex:column>				
+				<apex:column >
+					<apex:facet name="header">
+						<apex:outputPanel >
+						<apex:commandLink value="{!table.Column5_Name__c} {!IF(sortByColumn == table.Column5_Name__c,IF(orderAsc,'▲','▼'),'')}" action="{!sortData}" rerender="partyAgentTable" status="overlayStatus">
+                            <apex:param name="tableHeaderName" value="{!table.Column5_Name__c}"/>
+						</apex:commandLink>
+                        <apex:outputText rendered="{!$ObjectType.Party_Agent_Appointment__c.Fields.Date_From__c.InlineHelpText != null}">
+                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Party_Agent_Appointment__c.Fields.Date_From__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                        </apex:outputText>
+                        </apex:outputPanel>
+					</apex:facet>
+					<apex:outputField value="{!pAgentWrapper.partyAgentApp.Date_From__c}" rendered="{!NOT(pAgentWrapper.isEdited)}"/>
+					<apex:inputField value="{!pAgentWrapper.partyAgentApp.Date_From__c}" rendered="{!pAgentWrapper.isEdited}" styleClass="inlinef-Date_From__c"/>
+
+				</apex:column>
+				
+				<apex:column >
+					<apex:facet name="header">
+						<apex:outputPanel >
+						<apex:commandLink value="{!table.Column6_Name__c} {!IF(sortByColumn == table.Column6_Name__c,IF(orderAsc,'▲','▼'),'')}" action="{!sortData}" rerender="partyAgentTable" status="overlayStatus">
+                            <apex:param name="tableHeaderName" value="{!table.Column6_Name__c}"/>
+						</apex:commandLink>
+                        <apex:outputText rendered="{!$ObjectType.Party_Agent_Appointment__c.Fields.Date_To__c.InlineHelpText != null}">
+                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Party_Agent_Appointment__c.Fields.Date_To__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                        </apex:outputText>
+                        </apex:outputPanel>
+					</apex:facet>
+					<apex:outputField value="{!pAgentWrapper.partyAgentApp.Date_To__c}" rendered="{!NOT(pAgentWrapper.isEdited)}"/>
+					<apex:inputField value="{!pAgentWrapper.partyAgentApp.Date_To__c}" rendered="{!pAgentWrapper.isEdited}" styleClass="inlinef-Date_To__c"/>
+
+				</apex:column>
+			</apex:pageBlockTable>
+        </apex:pageBlock>
+	</apex:actionRegion>
+    </apex:form>
+</apex:page>

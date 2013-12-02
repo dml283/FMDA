@@ -1,0 +1,21 @@
+<apex:component >
+<style>
+<apex:outputPanel layout="none">
+#overlay, .overlay {
+    z-index:1000;
+    position:fixed; top:0; left:0;
+    width:100%; height:100%;
+    opacity:0.45; -moz-opacity:0.45; filter:alpha(opacity=45);
+    background:#fff url(/img/loading.gif) no-repeat center center;
+    text-indent: 20px;
+}
+</apex:outputPanel>
+</style>
+
+<apex:actionStatus id="overlayStatus" onstart="onAjaxStart()" onstop="onAjaxStop()">
+	<apex:facet name="start">
+		<div id="overlay"></div>
+	</apex:facet>
+</apex:actionStatus>
+
+</apex:component>

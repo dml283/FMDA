@@ -1,0 +1,38 @@
+<apex:page standardController="Audit_Checklist_Section__c" tabStyle="Audit_Checklist_Section__c" extensions="AcSectionNcPopupController">
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <apex:form id="myForm" >
+        <apex:sectionHeader title="Audit Checklist Section" subtitle="Related Non-Compliance" />
+        
+        <div style="text-align:center;padding:10px;">
+            <apex:commandButton value="Close" onclick="top.window.close();"/>
+        </div>
+        <apex:pageMessages ></apex:pageMessages>
+        
+        <apex:pageBlock mode="maindetail">
+            <apex:pageBlockTable var="nc" value="{!ListNc}" >
+                <apex:repeat var="f" value="{!$ObjectType.Non_Compliance__c.fieldSets.Non_Compliance}">
+                    <apex:column >
+                        
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                <apex:commandLink value="{!if(ListNcPager.OrderBy != f.FieldPath,'',if(ListNcPager.OrderDirection == 'ASC', '▲', '▼'))}{!f.Label}" 
+                                action="{!btnSort_Click}" status="overlayStatus" rerender="myForm">
+                                    <apex:param name="sortBy" value="{!f.FieldPath}"/>
+                                    <apex:param name="sortDirection" value="{!if(ListNcPager.OrderBy != f.FieldPath,'ASC',if(ListNcPager.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                </apex:commandLink>
+                                <apex:outputText rendered="{!f.FieldPath != 'RecordType.Name' && $ObjectType.Non_Compliance__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Non_Compliance__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:outputField value="{!nc[f]}"/>
+                    </apex:column>
+                </apex:repeat>
+            </apex:pageBlockTable>
+            <p>
+                <c:Pagination pager="{!ListNcPager}" action="{!voidAction}" rerender="myForm" status="overlayStatus"/>
+            </p>
+        </apex:pageBlock>
+    </apex:form>    
+</apex:page>

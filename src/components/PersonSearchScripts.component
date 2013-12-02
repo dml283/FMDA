@@ -1,0 +1,377 @@
+<apex:component >
+    <apex:attribute name="electoralWebServiceURL" type="string" description="Electoral Roll Web service URL"/>
+    <input type="text" id="hdn-dob" style="display:none"/>
+    <select id="ddl-endpoint" style="display:inline">
+    <!--<select id="ddl-endpoint" style="display:none">-->
+        <option>{!electoralWebServiceURL}</option>
+        <!--<option>https://wsvctesting.elections.nsw.gov.au/ElectoralLookup/ElectorSearch.svc/Electors</option>
+        <option value="http://www.mocky.io/v2/5212d8adfcb7deab01723c7e">Mocky - Count: 5</option>-->
+        <option value="http://www.mocky.io/v2/5228334903ff4c4000f3aeb6">Mocky - Count: 5</option>
+        <option value="http://www.mocky.io/v2/5212cf3efcb7de7601723c7d">Mocky - Count: 101</option>
+        <option value="http://www.mocky.io/v2/521ad987bfac294d00ff989a">Mocky - Count: 0</option>
+        <!--<option value="http://www.mocky.io/v2/521441bfcfaf857202b35c9a">Mocky - 206</option>
+        <option value="http://www.mocky.io/v2/5214419dcfaf857202b35c99">Mocky - 401</option>-->
+    </select>
+    <script type="text/javascript">
+    
+    var __sfdcSessionId = '{!GETSESSIONID()}';
+    </script>
+    <script src="/soap/ajax/28.0/connection.js" type="text/javascript"></script>
+    <script src="{!$Resource.Jquey_DataTable}" type="text/javascript"></script>
+    <style type="text/css">
+        tr.dataRow:hover td{background-color:#e3f3ff!important}
+        div.dataTables_info{float:left; padding:10px;}
+        div.dataTables_paginate{float:right; padding:10px;}
+        div.dataTables_paginate a{padding-left:20px;text-decoration:none; cursor:pointer} 
+        div.dataTables_paginate a.paginate_disabled_previous,
+        div.dataTables_paginate a.paginate_disabled_next
+        {color:grey;cursor:default;}
+        table.list.dataTable th.sorting_asc a:after{content:' ▲ '}
+        table.list.dataTable th.sorting_desc a:after{content:' ▼ '}
+        
+    </style>
+    
+    <script type="text/javascript">
+    var jsonResults = {};
+    
+    var NO_RESULTS_FOUND = "No matching results found.";
+    var SUFX_RESULTS_FOUND = " matching result(s) found.";         
+    var MAX_RESULTS_EXCEEDED = "Your search has returned too many results. Please refine the search criteria.";
+    
+    function onAjaxStop(){
+        $('#hdn-dob').val(setFormattedDate($('.searchDob').val()));
+        $('.searchDob').change(function(e){
+            $('#hdn-dob').val(setFormattedDate($(this).val()));
+        });
+        $('.Electoral').each(function( index ) {
+            var val = $(this).text().replace("Electoral Roll", "").trim();
+            $(this).text(val);
+        });
+    }
+    function invokeWebSvc()  
+    {
+        $("#rsltMessage").empty();
+        $('#electorTableData').empty();
+        $('#temp-overlay').show(100, function(){     
+            //var endpoint = "https://wsvctesting.elections.nsw.gov.au/ElectoralLookup/ElectorSearch.svc/Electors";
+            //var endpoint = 'http://www.mocky.io/v2/51e240968f912af600ca46a9';
+            //var endpoint = 'http://www.mocky.io/v2/5212cf3efcb7de7601723c7d';//101 records
+            try
+            {
+                var service = new ActiveXObject("ElectorLookupActiveX.ElectorSearch");
+                
+                var response = service.Electors($('#ddl-endpoint').val()//endpoint
+                                                , $(".rollSearchType").val()
+                                                , $(".searchFamilyName").val()
+                                                , $(".searchGivenName").val()
+                                                , $("#hdn-dob").val()//'19781120'//
+                                                , $(".searchLocality").val()
+                                                , $(".searchStreetName").val()
+                                                , $(".searchPostCode").val()
+                                                , $(".searchFadmsElectorId").val()
+                                               );
+                
+                if(response.indexOf('xml') > -1){
+                    invokeWebSvc_OnSuccess(response);
+                }
+                else{
+                    invokeWebSvc_OnFailure(response);
+                }
+            }
+            catch (e)
+            {
+                $("#rsltMessage").html("An error occurred on this page:<br/>Error Description: " + e.message);
+            }
+            $('#temp-overlay').hide();
+        });
+    }
+    
+    function invokeWebSvc_OnFailure(response){
+        var statusCode = {
+            '200': 'HTTP Status Code 200 OK'
+            , '201': 'HTTP Status Code 201: Created'
+            , '202': 'HTTP Status Code 202: Accepted'
+            , '203': 'HTTP Status Code 203: Non-Authoritative Information'
+            , '204': 'HTTP Status Code 204: No Content'
+            , '205': 'HTTP Status Code 205: Reset Content'
+            , '206': MAX_RESULTS_EXCEEDED
+            , '300': 'HTTP Status Code 300: Multiple Choices'
+            , '301': 'HTTP Status Code 301: Moved Permanently'
+            , '302': 'HTTP Status Code 302: Found'
+            , '303': 'HTTP Status Code 303: See Other'
+            , '304': 'HTTP Status Code 304: Not Modified'
+            , '306': 'HTTP Status Code 306: Switch Proxy'
+            , '307': 'HTTP Status Code 307: Temporary Redirect'
+            , '308': 'HTTP Status Code 308: Resume Incomplete'
+            , '400': "HTTP Status Code 400: Bad Request<br/> An issue was encountered with the request."
+            , '401': "HTTP Status Code 401: Unauthorized<br/> User is unauthorised to use this service."
+            , '402': 'HTTP Status Code 402: Payment Required'
+            , '403': 'HTTP Status Code 403: Forbidden'
+            , '404': 'HTTP Status Code 404: Not Found'
+            , '405': 'HTTP Status Code 405: Method Not Allowed'
+            , '406': 'HTTP Status Code 406: Not Acceptable'
+            , '407': 'HTTP Status Code 407: Proxy Authentication Required'
+            , '408': "HTTP Status Code 408: Request Timeout<br/> Request has timed out."
+            , '409': 'HTTP Status Code 409: Conflict'
+            , '410': 'HTTP Status Code 410: Gone'
+            , '411': 'HTTP Status Code 411: Length Required'
+            , '412': 'HTTP Status Code 412: Precondition Failed'
+            , '413': 'HTTP Status Code 413: Request Entity Too Large'
+            , '414': 'HTTP Status Code 414: Request-URI Too Long'
+            , '415': 'HTTP Status Code 415: Unsupported Media Type'
+            , '416': 'HTTP Status Code 416: Requested Range Not Satisfiable'
+            , '417': 'HTTP Status Code 417: Expectation Failed'
+            , '500': 'HTTP Status Code 500: Internal Server Error'
+            , '501': 'HTTP Status Code 501: Not Implemented'
+            , '502': 'HTTP Status Code 502: Bad Gateway'
+            , '503': 'HTTP Status Code 503: Service Unavailable'
+            , '504': 'HTTP Status Code 504: Gateway Timeout'
+            , '505': 'HTTP Status Code 505: HTTP Version Not Supported'
+            , '511': 'HTTP Status Code 511: Network Authentication Required'
+        };
+        $("#rsltMessage").html('An error has occured while processing the request.<br/>Error Description: ' + statusCode[response]);
+    }
+    
+    function invokeWebSvc_OnSuccess(response)
+    {
+        try
+        {
+            // Variables to hold address nodes used for silent elector logic
+            var silentElectorFlg = "";
+
+            // Parse xmlstring
+            var xmlString = $(response);  
+
+            var electorResultCount = "";
+            
+            $(xmlString).each(function () 
+            {                   
+                electorResultCount = $(this).attr('count');
+            });  
+            if (electorResultCount <= 0)
+            {
+                document.getElementById("rsltMessage").innerHTML = "<p>" + NO_RESULTS_FOUND+ "</p><p><button Type='button' onclick='notOnElectoralRoll();'>Not on Electoral Roll</button></p>";
+            }
+            else if(electorResultCount > 100){
+                document.getElementById("rsltMessage").innerHTML = MAX_RESULTS_EXCEEDED;
+            }
+            else
+            {
+                $('#electorTableData').append('<p style="margin:10px;">'+electorResultCount + SUFX_RESULTS_FOUND+'</p>');
+                //document.getElementById("rsltMessage").innerHTML = electorResultCount + SUFX_RESULTS_FOUND;
+                // Open table
+                var electorTableData = "<table class='list' cellpadding='0' cellspacing='0' border='0' width='100%'>";
+                electorTableData += "<thead class='rich-table-thead'><tr class='headerRow'><th class='headerRow'><a href='javascript:void(0)'>FADMS Elector ID</a></th>";
+                electorTableData += "<th class='headerRow'><a href='javascript:void(0)'>Salutation</a></th>";
+                electorTableData += "<th class='headerRow'><a href='javascript:void(0)'>Given Name(s)</a></th>";
+                electorTableData += "<th class='headerRow'><a href='javascript:void(0)'>Family Name</a></th>";
+                electorTableData += "<th class='headerRow'><a href='javascript:void(0)'>Date of Birth</a></th>";
+                electorTableData += "<th class='headerRow'><a href='javascript:void(0)'>Occupation</a></th>";
+                electorTableData += "<th class='headerRow'><a href='javascript:void(0)'>Street</a></th>";
+                electorTableData += "<th class='headerRow'><a href='javascript:void(0)'>Locality</a></th>";
+                electorTableData += "<th class='headerRow'><a href='javascript:void(0)'>Postcode</a></th></tr></thead>";                
+                electorTableData += "<tbody>";
+                
+                $(xmlString).find("Elector").each(function (i) 
+                {                   
+                    $ent = {
+                        FadmsElectorId: $(this).find("FadmsElectorId").text(),
+                        ElectorSalutation: $(this).find("ElectorSalutation").text(),
+                        ElectorGivenNames: $(this).find("ElectorGivenNames").text(),
+                        ElectorFamilyName: $(this).find("ElectorFamilyName").text(),
+                        ElectorDob: $(this).find("ElectorDob").text(),
+                        ElectorOccupation: $(this).find("ElectorOccupation").text(),
+                        ElectorSilent: $(this).find("ElectorSilent").text(),
+                        EnrolledAddress: $(this).find("EnrolledAddress").text(),
+                        EnrolledLocality: $(this).find("EnrolledLocality").text(),
+                        EnrolledPostcode: $(this).find("EnrolledPostcode").text()
+                    };
+                    
+                    electorTableData += "<tr class='dataRow "+(i%2 == 0 ? 'even ' : 'odd ') + (i == 1 ? 'first' : '') +"'>";
+                    electorTableData += "<td class='dataCell'>" + $ent.FadmsElectorId + "</td>";
+                    electorTableData += "<td class='dataCell'>" + $ent.ElectorSalutation + "</td>";
+                    electorTableData += "<td class='dataCell'><a href='javascript:void(0)' onclick='selectElectoralRoll(this)'>" + $ent.ElectorGivenNames + "</a></td>";
+                    electorTableData += "<td class='dataCell'><a href='javascript:void(0)' onclick='selectElectoralRoll(this)'>" + $ent.ElectorFamilyName + "</a></td>";
+                    electorTableData += "<td class='dataCell'>" + $ent.ElectorDob + "</td>";
+                    electorTableData += "<td class='dataCell'>" + $ent.ElectorOccupation + "</td>";
+                    
+                    if ($ent.ElectorSilent != "Y")
+                    {   
+                        electorTableData += "<td class='dataCell'>" + $ent.EnrolledAddress + "</td>";                                     
+                        electorTableData += "<td class='dataCell'>" + $ent.EnrolledLocality + "</td>";                    
+                        electorTableData += "<td class='dataCell'>" + $ent.EnrolledPostcode + "</td>";                        
+                    }
+                    else
+                    {
+                        // Display blank table data cells
+                         electorTableData += "<td class='dataCell'></td>";
+                         electorTableData += "<td class='dataCell'></td>";
+                         electorTableData += "<td class='dataCell'></td>";
+                    }
+
+                    electorTableData += "</tr>";
+                    
+                    jsonResults[$ent.FadmsElectorId] = $ent;
+                }); 
+                
+                electorTableData += "</tbody></table>";
+
+                // Set html tablerow data (div)
+                var tableData = document.getElementById('electorTableData');
+                //tableData.innerHTML = electorTableData;
+                //// sforce.debug.log(electorTableData);
+                $('#electorTableData').append($(electorTableData));
+                $('#electorTableData table').dataTable({
+                    "bFilter": false,
+                    "bLengthChange": false,
+                    "iDisplayLength": 20,
+                    "oLanguage": {
+                        "sInfo": "Total Records: _TOTAL_ (Showing _START_ → _END_)",
+                        "oPaginate": {
+                            "sNext": "Next page <b>»</b>",
+                            "sPrevious": "<b>«</b> Previous page"
+                        }
+                    },
+                    "aaSorting": [[2,'asc'], [1,'asc'], [3, 'asc']]
+                });
+            } // end else
+        }
+        catch (e)
+        {
+            if(e.message == 'PartialContent'){
+                $("#rsltMessage").html(MAX_RESULTS_EXCEEDED);
+            }
+            else{
+                $("#rsltMessage").html("An error occurred on this page:<br/>Error Description: " + e.message);
+            }
+        }
+    }
+    
+    function processFailedRs(response, request) 
+    {
+        try
+        {    
+            // Constants
+            var PREFX_MSG = "An integration error occurred: " + "\n\n";
+            var PAGE_ERR_MSG = "An error occurred during this search.";
+            var ERR_MAX_RESULTS_EXCEEDED = "Too many matching results found (greater than 100 results).";          
+            var ERR_206 = "HTTP Status Code 206: Partial Content" + "\n" + ERR_MAX_RESULTS_EXCEEDED;
+            var ERR_400 = "HTTP Status Code 400: Bad Request" + "\n" + "An issue was encountered with the request.";
+            var ERR_401 = "HTTP Status Code 401: Unauthorized" + "\n" + "User is unauthorised to use this service.";
+            var ERR_408 = "HTTP Status Code 408: Request Timeout" + "\n" + "Request has timed out.";
+            var HTTP_STATUS = request.status;
+            
+            var userErrorMsg = "";
+            
+            // TEMP
+            // sforce.debug.log("Failed");
+            
+            switch (HTTP_STATUS)
+            {
+                case 206:
+                    // Set results message
+                    document.getElementById("rsltMessage").innerHTML = ERR_MAX_RESULTS_EXCEEDED;
+                    userErrorMsg = PREFX_MSG + ERR_206;
+                    break;
+                case 400:
+                    // Set results message
+                    document.getElementById("rsltMessage").innerHTML = PAGE_ERR_MSG;                    
+                    userErrorMsg = PREFX_MSG + ERR_400;
+                    break;                     
+                case 401:
+                    // Set results message
+                    document.getElementById("rsltMessage").innerHTML = PAGE_ERR_MSG;                    
+                    userErrorMsg = PREFX_MSG + ERR_401;
+                    break;
+                case 408:
+                    // Set results message
+                    document.getElementById("rsltMessage").innerHTML = PAGE_ERR_MSG;                    
+                    userErrorMsg = PREFX_MSG + ERR_408;
+                    break;
+                default:
+                    // Set results message
+                    document.getElementById("rsltMessage").innerHTML = PAGE_ERR_MSG;
+                    userErrorMsg = PREFX_MSG + "\n" + "HTTP Status Code: " + HTTP_STATUS + "\n" + "HTTP Status Description: " + request.statusText + "\n\n" + response;
+            }
+            
+            alert(userErrorMsg);
+        }
+        catch (e)
+        {
+            var errorMsg = "An error occurred on this page:\n\n";
+            
+            errorMsg += "Error Description: " + e.message + "\n\n";
+            errorMsg += "Click OK to continue.\n\n";
+            alert(errorMsg);
+        }        
+    }
+    
+    function getFormattedDate(inputDate)
+    {
+        // Input Data Format is: YYYYMMDD
+        // Output Date Format is: DD/MM/YYYY
+        
+        try
+        {
+            if(inputDate == '' || inputDate == null || inputDate == undefined){
+                return;
+            }
+            var DAYS = inputDate.substring(6, 8);
+            var MONTHS = inputDate.substring(4, 6);
+            var YEARS = inputDate.substring(0, 4);
+            var OUTPUT_DATE = DAYS + "\/" + MONTHS + "\/" + YEARS;
+            
+            //// sforce.debug.log("Input Date: " + inputDate);
+            //// sforce.debug.log("Transformed Date: " + OUTPUT_DATE);
+        }
+        catch (e)
+        {
+            var errorMsg = "An error occurred on this page:\n\n";
+            
+            errorMsg += "Error Description: " + e.message + "\n\n";
+            errorMsg += "Click OK to continue.\n\n";
+            alert(errorMsg);
+        }
+        
+        return OUTPUT_DATE;
+    }
+    
+    function setFormattedDate (inputDate) {
+        // Input Data Format is: DD/MM/YYYY
+        // Output Date Format is: YYYYMMDD
+        
+        try
+        {
+            if(inputDate == '' || inputDate == null || inputDate == undefined){
+                return;
+            }
+            var s = "0" + inputDate;
+            inputDate = s.substr(s.length-10);
+                
+            var DAYS = inputDate.substring(0, 2);
+            var MONTHS = inputDate.substring(3, 5);
+            var YEARS = inputDate.substring(6, 10);
+            var OUTPUT_DATE = YEARS + MONTHS + DAYS;
+            
+            //// sforce.debug.log("Input Date: " + inputDate);
+            //// sforce.debug.log("Transformed Date: " + OUTPUT_DATE);
+        }
+        catch (e)
+        {
+            var errorMsg = "An error occurred on this page:\n\n";
+            
+            errorMsg += "Error Description: " + e.message + "\n\n";
+            errorMsg += "Click OK to continue.\n\n";
+            alert(errorMsg);
+        }
+        
+        return OUTPUT_DATE;
+    }
+    
+    function selectElectoralRoll(e){
+        var electorId = $(e).parent().parent().children(':first').text();
+        $('.hdn-JsonElectoralRoll').val(JSON.stringify(jsonResults[electorId]));
+        electoralRollOnSelect();
+    }
+    </script>
+</apex:component>

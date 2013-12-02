@@ -1,0 +1,166 @@
+<apex:page controller="AuditChecklistBuilderController" tabstyle="Audit_Checklist__c" title="Audit Checklist Builder">
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <style>
+        .headerRow,.dataCell{white-space:normal !important;}
+    </style>
+    <script>
+    	$(function(){
+            var collapseIds = $('.allHiddenId').val().split(';');
+            
+            for (var i = 0; i < collapseIds.length; i++) {
+                var collapseId = collapseIds[i];
+                if (collapseId != null && collapseId != '')
+                document.getElementById(collapseId).click();
+                //$('#' + collapseId).click();
+            }
+        })
+        function storeHiddenId() {
+            $('.allHiddenId').val('');
+            $('img.showListButton').each(function(index){
+                $('.allHiddenId').val($('.allHiddenId').val() + $(this).attr('id') + ';');
+            });
+        }
+		function openAuditItemCompliance(SectionId,ItemId) {
+            //alert(document.URL);
+            var url = '/apex/AuditItemCompliancePopup?isdtp=vw&sectionId=' + SectionId +'&checklistItemId=' + ItemId + '&retURL='+document.URL;
+            window.open(url, '_blank' , 'width=1200,height=680,scrollbars=1,center=1');
+        }
+    	function reloadChecklistItem(SectionId, ItemId) {
+            reloadItem(SectionId,ItemId);
+        }
+    </script>
+    <apex:form id="myForm">        
+    	<apex:sectionHeader title="Audit Checklist Builder"/>
+        
+        <apex:outputPanel id="message">
+	        <apex:pageMessages />
+        </apex:outputPanel>
+        
+        <apex:actionFunction name="reloadItem" action="{!reloadItem}" rerender="checklistItem,message" status="overlayStatus">
+            <apex:param name="sectionId" value=""/>
+            <apex:param name="itemId" value=""/>
+        </apex:actionFunction>
+        
+        <apex:pageBlock mode="maindetail" rendered="{!auditChecklist != null}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Back" action="{!btnBack_OnClick}" immediate="true"/>
+                <apex:commandButton value="Add Checklist Section" onClick="storeHiddenId();return true;" action="{!btnAddSection_OnClick}" status="overlayStatus" />
+                <apex:commandButton value="Quick Save" status="overlayStatus" onClick="storeHiddenId();return true;" action="{!btnQuickSave_OnClick}"/>
+                <apex:commandButton value="Save" status="overlayStatus" action="{!btnSave_OnClick}"/>
+                <apex:commandButton value="Clone" status="overlayStatus" action="{!btnClone_OnClick}" rendered="{!auditChecklist.Id != null}"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        <apex:inputText value="{!allHiddenId}" styleClass="allHiddenId" style="display:none"/>
+        <apex:pageBlock title="Audit Checklist Template" rendered="{!auditChecklist != null}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Save" action="{!btnSaveAuditCheckList_OnClick}" onClick="storeHiddenId();return true;" status="overlayStatus" rendered="{!isEditChecklist}"/>
+                <apex:commandButton value="Edit" action="{!btnEditAuditCheckList_OnClick}" onClick="storeHiddenId();return true;" status="overlayStatus" rendered="{!!isEditChecklist}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="1">
+                <apex:inputField value="{!auditChecklist.Template_Name__c}" rendered="{!isEditChecklist}"/>
+                <apex:inputField value="{!auditChecklist.Template_Description__c}" rendered="{!isEditChecklist}"/>
+                <apex:outputField value="{!auditChecklist.Template_Name__c}" rendered="{!!isEditChecklist}"/>
+                <apex:outputField value="{!auditChecklist.Template_Description__c}" rendered="{!!isEditChecklist}"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <br/><br/>
+        <apex:pageBlock id="SectionBlock"  mode="detail" rendered="{!SectionWrapperList.size > 0}">
+            <apex:repeat value="{!SectionWrapperList}" var="secWrap">
+                <apex:pageBlockSection title="{!IF(secWrap.Section.Name != NULL,secWrap.Section.Name,'New Section')}" columns="1">
+                    <apex:outputPanel layout="block" style="text-align:center">
+                        <apex:commandLink value="Add Checklist Item" style="text-decoration:none;" styleClass="btn" action="{!btnAddChecklistItem_OnClick}" status="overlayStatus" rendered="{!secWrap.isEdit && secWrap.isExist}" rerender="checklistItem,message">
+                            <apex:param name="sectionId" value="{!secWrap.Id}"/>
+                        </apex:commandLink>
+                        
+                        <apex:commandLink value="Quick Save" onClick="storeHiddenId();return true;" style="text-decoration:none;" styleClass="btn" action="{!btnQuickSaveSection_OnClick}" status="overlayStatus" rendered="{!secWrap.isEdit}" >
+                            <apex:param name="sectionId" value="{!secWrap.Id}"/>
+                        </apex:commandLink>
+                        
+                        <apex:commandLink value="Save" onClick="storeHiddenId();return true;" style="text-decoration:none;" styleClass="btn" action="{!btnSaveSection_OnClick}" status="overlayStatus" rendered="{!secWrap.isEdit}" >
+                            <apex:param name="sectionId" value="{!secWrap.Id}"/>
+                        </apex:commandLink>
+                        
+                        <apex:commandLink value="Edit" onClick="storeHiddenId();return true;" style="text-decoration:none;" styleClass="btn" action="{!btnEditSection_OnClick}" status="overlayStatus" rendered="{!!secWrap.isEdit}" >
+                            <apex:param name="sectionId" value="{!secWrap.Id}"/>
+                        </apex:commandLink>
+                        
+                        <apex:commandLink value="Delete" onClick="storeHiddenId();return true;" style="text-decoration:none;" styleClass="btn" action="{!btnDeleteSection_OnClick}" status="overlayStatus" rendered="{!!secWrap.isEdit}" >
+                            <apex:param name="sectionId" value="{!secWrap.Id}"/>
+                        </apex:commandLink>
+                    </apex:outputPanel>
+                    <apex:repeat var="secF" value="{!MapSectionFieldSets['Audit_Checklist_Section_Template'].Fields}">
+                        <apex:inputField value="{!secWrap.Section[secF]}" rendered="{!secF.fieldPath != 'Audit_Checklist__c' && secWrap.isEdit}" />
+                        <apex:outputField value="{!secWrap.Section[secF]}" rendered="{!secF.fieldPath != 'Audit_Checklist__c' && !secWrap.isEdit}" />
+                    </apex:repeat>
+                    <apex:outputPanel id="checklistItem" style="white-space:nowrap">
+                        <apex:pageBlockTable var="item" value="{!secWrap.Items}" rendered="{!secWrap.Items.size > 0}" style="width:100%">
+                            <apex:column rendered="{!secWrap.isEdit}">
+                                <apex:facet name="header">
+                                    Action
+                                </apex:facet>
+                                <apex:outputPanel rendered="{!!item.isEdit}">
+                                    <apex:commandLink value="Edit" action="{!btnEditRow_onClick}" status="overlayStatus" rerender="checklistItem, message">
+                                        <apex:param name="sectionId" value="{!secWrap.Id}"/>
+                                        <apex:param name="itemId" value="{!item.Id}"/>
+                                    </apex:commandLink>
+                                	&nbsp;
+                                    <apex:commandLink value="Delete" action="{!btnDeleteRow_onClick}" status="overlayStatus"  rerender="checklistItem, message">
+                                        <apex:param name="sectionId" value="{!secWrap.Id}"/>
+                                        <apex:param name="itemId" value="{!item.Id}"/>
+                                    </apex:commandLink>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!item.isEdit}">
+                                    <apex:commandLink value="Save" action="{!btnSaveRow_onClick}" status="overlayStatus" rerender="checklistItem, message">
+                                        <apex:param name="sectionId" value="{!secWrap.Id}"/>
+                                        <apex:param name="itemId" value="{!item.Id}"/>
+                                    </apex:commandLink>
+                                	&nbsp;
+                                    <apex:commandLink value="Cancel" action="{!btnCancelRow_onClick}" status="overlayStatus" rerender="checklistItem, message">
+                                        <apex:param name="sectionId" value="{!secWrap.Id}"/>
+                                        <apex:param name="itemId" value="{!item.Id}"/>
+                                    </apex:commandLink>
+                                </apex:outputPanel>
+                            </apex:column>
+                            <apex:repeat var="itemF" value="{!MapItemFieldSets['Audit_Checklist_Item_Template'].Fields}">
+                                <apex:column rendered="{!itemF.fieldPath != 'Audit_Checklist_Section__c'}">
+                                    <apex:facet name="header">
+                                		<apex:outputPanel >
+                                            {!itemF.label}
+                                            <apex:outputText rendered="{!$ObjectType.Audit_Checklist_Item__c.Fields[itemF.FieldPath].InlineHelpText != null}">
+                                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Audit_Checklist_Item__c.Fields[itemF.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                            </apex:outputText>
+                                        </apex:outputPanel>
+                                    </apex:facet>
+                                    <apex:inputField value="{!item.Item[itemF]}" rendered="{!secWrap.isEdit && item.isEdit}"/>
+                                    <apex:outputField value="{!item.Item[itemF]}" rendered="{!!secWrap.isEdit || !item.isEdit}"/>
+                                </apex:column>
+                            </apex:repeat>
+                            <apex:column rendered="{!!item.isEdit}">
+                                <apex:facet name="header">
+                                    <apex:outputPanel >
+                                        <apex:outputText value="Non-Compliance"/>
+                                    </apex:outputPanel>
+                                </apex:facet>
+                                <apex:commandLink value="Add" onclick="openAuditItemCompliance('{!secWrap.Id}','{!item.Item.Id}');return false;" rendered="{!!item.isNonComplianceExist}" />
+                                <apex:commandLink value="View" onclick="openAuditItemCompliance('{!secWrap.Id}','{!item.Item.Id}');return false;" rendered="{!item.isNonComplianceExist}"/>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                    </apex:outputPanel>
+                </apex:pageBlockSection>
+            </apex:repeat>
+        </apex:pageBlock>
+            
+        
+        <apex:pageBlock mode="maindetail">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Back" action="{!btnBack_OnClick}" immediate="true"/>
+                <apex:commandButton value="Add Checklist Section" onClick="storeHiddenId();return true;" action="{!btnAddSection_OnClick}" status="overlayStatus" />
+                <apex:commandButton value="Quick Save" status="overlayStatus" onClick="storeHiddenId();return true;" action="{!btnQuickSave_OnClick}"/>
+                <apex:commandButton value="Save" status="overlayStatus" action="{!btnSave_OnClick}"/>
+                <apex:commandButton value="Clone" status="overlayStatus" action="{!btnClone_OnClick}" rendered="{!auditChecklist.Id != null}"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

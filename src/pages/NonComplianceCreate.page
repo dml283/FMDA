@@ -1,0 +1,113 @@
+<apex:page standardController="Task" extensions="NonComplianceCreateController">
+    <script>
+    function openComplianceSearch(recordTypeName) {
+        var keyword = $('.show-Subject').text();
+        var url = '/apex/NonComplianceSearch?isdtp=vw&keyword=' + keyword + '&recordTypeName=' + recordTypeName;
+        window.open(url, '_blank' , 'width=1200,height=600,scrollbars=1,center=1');
+    }
+    function ReloadSection(itemId,jsonObj) {
+        // alert(JSON.stringify(jsonObj)); 
+        $('.Non_Compliance_Id__c').val(jsonObj['Id']);
+        $('.Non_Compliance_Number__c').val(jsonObj['Non_Compliance_Number__c']);
+        $('.show-Non_Compliance_Number__c').text(jsonObj['Non_Compliance_Number__c']);
+        $('.Line_Item_Category_Id__c').val(jsonObj['Line_Item_Category__c']);
+        $('.Subject').val(jsonObj['Name']);
+        $('.show-Subject').text(jsonObj['Name']);
+        $('.Legislative_Reference__c').val(jsonObj['Legislative_Reference__c']);
+        $('.show-Legislative_Reference__c').text(jsonObj['Legislative_Reference__c']);
+        $('.Compliance_Issue__c').val(jsonObj['Compliance_Issue__c']);
+        $('.show-Compliance_Issue__c').text(jsonObj['Compliance_Issue__c']);
+        $('.Offence_Reference__c').val(jsonObj['Offence_Reference__c']);
+        $('.show-Offence_Reference__c').text(jsonObj['Offence_Reference__c']);
+        $('.Penalty_Notice_Penalty__c').val(jsonObj['Penalty_Notice_Penalty__c']);
+        $('.show-Penalty_Notice_Penalty__c').text(jsonObj['Penalty_Notice_Penalty__c']);
+        $('.Outcome__c').val(jsonObj['Outcome__c']);
+        $('.show-Outcome__c').text(jsonObj['Outcome__c']);
+        $('.Type').val('{!recordTypeName}');
+        $('.show-Type').text('{!recordTypeName}');
+        $('.Description').val(jsonObj['Comments__c']);
+        $('.show-Description').text(jsonObj['Comments__c']);
+        
+        $('.show-Offender__c').text(jsonObj['Offender__c']);
+        $('.offender').val(jsonObj['Offender__c']);
+    }
+    
+    $(function(){
+        alignCss();
+    });
+    
+    function alignCss(){
+    	var inputStatus = $('.Status').parent(); 
+        //$(inputStatus).css('margin-left','33px');
+        $(inputStatus).css('display','inline');        
+        var inputPriority = $('.Priority').parent(); 
+        //$(inputPriority).css('margin-left','33px');
+        $(inputPriority).css('display','inline');
+    }
+    </script>
+    <c:CommonScripts ></c:CommonScripts>
+    <apex:form >
+        <apex:sectionHeader title="New Non-Compliance" subtitle="New Non-Compliance"/>
+        <apex:pageMessages escape="false"></apex:pageMessages>
+        <apex:pageBlock title="New Non-Compliance" mode="edit">
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!Save}" value="Save"/>
+                <apex:commandButton action="{!Cancel}" value="Cancel"/>                
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection title="Information" columns="2">
+                <apex:outputField value="{!Entity.OwnerId}"/>
+                <apex:outputField value="{!Entity.RecordTypeId}"/>
+                <apex:outputField value="{!Entity.WhoId}"/>
+                <apex:outputField value="{!Entity.WhatId}"/>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="Non-Compliance Information" columns="3">
+                <apex:repeat var="f" value="{!AllTaskFieldSet['Non_Compliance'].Fields}">                                                                
+                    <apex:outputPanel >
+                        <apex:outputLabel styleclass="labelCol" style="/*margin-left: 25px;*/">{!f.label}</apex:outputLabel>
+                        <apex:outputPanel rendered="{!f.FieldPath == 'Subject'}" >
+                            <apex:outputPanel >
+                                <apex:inputField value="{!Entity['Non_Compliance_Id__c']}" styleClass="Non_Compliance_Id__c" style="display:none;"/>
+                                <apex:inputField value="{!Entity['Non_Compliance_Number__c']}" styleClass="Non_Compliance_Number__c" style="display:none;"/>
+                                <apex:inputField value="{!Entity['Line_Item_Category_Id__c']}" styleClass="Line_Item_Category_Id__c" style="display:none;"/>
+                                <apex:inputField value="{!Entity[f.FieldPath]}" styleClass="{!f.FieldPath}" style="display:none;"/>
+                                <apex:outputText value="{!Entity[f.FieldPath]}" styleclass="show-{!f.FieldPath}" style="display:inline;"></apex:outputText>
+                            </apex:outputPanel>
+                            <apex:outputPanel >
+                                <img src="/s.gif" class="lookupIcon" onblur="this.className = 'lookupIcon';" 
+                                onfocus="this.className = 'lookupIconOn';" 
+                                onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" 
+                                onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';"
+                                onclick="openComplianceSearch('{!recordTypeName}');"
+                                title="Non-Compliance Lookup"/>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        
+                        <apex:outputPanel rendered="{! f.FieldPath != 'Line_Item_Category__c' && f.FieldPath != 'Status'
+                        && f.FieldPath != 'Priority' && f.FieldPath != 'CreatedDate'
+                        && f.FieldPath != 'ActivityDate' && f.FieldPath != 'Description' && f.FieldPath != 'Subject' }">
+                            <apex:inputField rendered="!f.FieldPath != 'Offender__c'" value="{!Entity[f.FieldPath]}" styleClass="{!f.FieldPath}" style="display:none;"/>
+                            <apex:outputText value="{!Entity[f.FieldPath]}" styleClass="show-{!f.FieldPath}" style="display:inline;"/>         
+                        </apex:outputPanel>
+                        
+                        <apex:outputPanel rendered="{!f.FieldPath == 'Line_Item_Category__c' || f.FieldPath == 'Status'
+                            || f.FieldPath == 'Priority' || f.FieldPath == 'CreatedDate'
+                            || f.FieldPath == 'ActivityDate' || f.FieldPath == 'Description'}">
+                                
+                            <apex:inputField value="{!Entity[f.FieldPath]}" rendered="{!NOT(f.FieldPath == 'Line_Item_Category__c' 
+                            || f.FieldPath == 'ActivityDate' || f.FieldPath == 'CreatedDate')}" styleClass="{!f.FieldPath}" style="display:inline;"/>
+                            
+                            <apex:outputField value="{!Entity[f.FieldPath]}" rendered="{!f.FieldPath == 'Line_Item_Category__c' 
+                            || f.FieldPath == 'CreatedDate'}" styleClass="{!f.FieldPath}" style="display:inline;"/>
+                                
+                           	<apex:inputField value="{!Entity[f.FieldPath]}" rendered="{!f.FieldPath == 'ActivityDate' && hasDueDate}"
+                            styleClass="{!f.FieldPath}" style="display:inline;"/>
+                            <apex:outputField value="{!Entity[f.FieldPath]}" rendered="{!f.FieldPath == 'ActivityDate' && !hasDueDate}" 
+                            styleClass="{!f.FieldPath}" style="display:inline;"/>
+                        </apex:outputPanel>
+                        <apex:inputText value="{!offender}" styleclass="offender" style="display:none;"/>
+                    </apex:outputPanel>
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

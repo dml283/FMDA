@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>List</customSettingsType>
+    <customSettingsVisibility>Public</customSettingsVisibility>
+    <description>Settings to allow Admin to turn on or turn off certain S2T functionality.</description>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Disable_Attachment_Grid_Link__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>Disable the link to the attachment on the Grids</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Disable the link to the attachment on the Grids</inlineHelpText>
+        <label>Disable Attachment Grid Link</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Disable_Change_Attachment__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>Disable the Users ability to change the Trim Record Salesforce Attachment</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Disable the Users ability to change the Trim Record Salesforce Attachment</inlineHelpText>
+        <label>Disable Change Attachment</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Disable_Deletion__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>Disable the User from being able to delete a Trim Record.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Disable the User from being able to delete a Trim Record.</inlineHelpText>
+        <label>Disable Deletion</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Disable_New_Linked_Record__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>Disable the User from being able to create a new linked record.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Disable the User from being able to create a new linked record.</inlineHelpText>
+        <label>Disable New Linked Record</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>S2T Custom Settings</label>
+</CustomObject>

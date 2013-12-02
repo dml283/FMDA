@@ -1,0 +1,97 @@
+<apex:page controller="AuditItemCompliancePopupController" title="Audit Checklist Item Non-Compliance" tabStyle="Audit_Checklist_Item_Non_Compliance_Join__c">
+    <script>
+		function getURLParameter(name) {
+          	return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null
+        }
+        function closeIt(){
+            opener.reloadChecklistItem('{!sectionId}','{!checklistItemId}');
+        }
+    	window.onbeforeunload = function(){
+            opener.reloadChecklistItem('{!sectionId}','{!checklistItemId}');
+            top.window.opener.location.href = top.window.opener.location.href;
+        };
+		function includeAll() {
+            var isChecked = $('.cb-Parent').is(":checked");
+            $('.cb-Child').prop('checked',isChecked);
+        }
+    	function ReloadSection(itemId,jsonObj) {
+            SaveItem(itemId,jsonObj['Id']);
+            return true;
+        }
+    	function openComplianceSearch(itemId,recordTypeName) {
+            var keyword = $('.' + itemId + '_show-Subject').text();
+            var url = '/apex/NonComplianceSearch?isdtp=vw&keyword=' + keyword + '&recordTypeName=' + recordTypeName +'&itemIdParam=' + itemId;
+            window.open(url, '_blank' , 'width=1200,height=600,scrollbars=1,center=1');
+        }
+    </script>
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <style type="text/css">
+        .headerRow th{white-space:normal!important}
+    </style>
+    
+    <apex:form id="pnlForm" >
+        <apex:sectionHeader title="Audit Checklist Item Non-Compliance" />
+        <apex:outputPanel id="pnlPageMessages">    
+            <apex:pageMessages escape="false" />
+        </apex:outputPanel>
+        
+        <apex:actionFunction name="SaveItem" action="{!SaveItem}" rerender="pnlForm" status="overlayStatus">
+            <apex:param name="itemId" value=""/>
+            <apex:param name="NonComplianceId" value=""/>
+        </apex:actionFunction>
+        <apex:pageBlock mode="edit">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Add Non-Compliance" action="{!btnAdd_OnClick}" rerender="pnlForm" status="overlayStatus" />
+                <apex:commandButton value="Delete Selected" action="{!btnDelete_OnClick}" rerender="pnlForm" status="overlayStatus" />
+                <apex:commandButton value="Close" onclick="top.window.close(); return false;" />
+            </apex:pageBlockButtons>
+            
+            <apex:outputPanel >
+                <apex:pageBlockTable value="{!WrapperList}" var="item" >
+                    <apex:column >
+                        <apex:facet name="header" >
+                            <apex:inputCheckbox styleClass="cb-Parent" onclick="includeAll();"/>
+                        </apex:facet>
+                        <apex:inputCheckbox value="{!Item.isInclude}" styleClass="cb-Child"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                <apex:outputText value="Non-Compliance"/>
+                                <apex:outputText rendered="{!$ObjectType.Audit_Checklist_Item_Non_Compliance_Join__c.Fields.Non_Compliance__c.InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Audit_Checklist_Item_Non_Compliance_Join__c.Fields.Non_Compliance__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:outputPanel >
+                            <img src="/s.gif" class="lookupIcon" onblur="this.className = 'lookupIcon';" 
+                            onfocus="this.className = 'lookupIconOn';" 
+                            onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" 
+                            onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';"
+                            onclick="openComplianceSearch('{!item.Id}');"
+                            title="Non-Compliance Lookup"/>
+                        </apex:outputPanel>
+                    </apex:column>
+					<apex:repeat var="f" value="{!AllComFieldSet['Non_Compliance'].Fields}">
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputPanel >
+                                    <apex:outputText value="{!f.label}"/>
+                                    <apex:outputPanel rendered="{!f.FieldPath != 'RecordType.Name'}">
+                                        <apex:outputText rendered="{!$ObjectType.Non_Compliance__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Non_Compliance__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:facet>
+                            <apex:outputPanel >
+                                <apex:outputField value="{!item.Item.Non_Compliance__r[f.FieldPath]}"/>
+                            </apex:outputPanel>
+                        </apex:column>
+                    </apex:repeat>
+                </apex:pageBlockTable>
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,371 @@
+<apex:page standardController="Line_Item_Type__c" tabstyle="Line_Item_Type__c" extensions="LineItemFormController">
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <style type="text/css">
+        .headerRow th{white-space:normal!important}
+    </style>
+    <script>
+    function getURLParameter(name) {
+          	return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null
+        }
+        function reloadit(nothing){
+            // alert('retURL');
+            //window.location.href = getURLParameter('retURL');
+            //location.reload();
+            Display();
+            //window.location.href = window.location.href;
+        }
+    //window.onbeforeunload = closeIt();
+    
+    {!StartUpScript}
+    var lastSectionId;
+    $(function(){
+        lastSectionId = $('.pbSubheader img').first().parent().parent().attr('id');
+        onAjaxStop();
+        $(window).bind('resize', resizeIframe);
+    })
+        
+        function onAjaxStop(){
+            //bind stakeholder person lookup
+            $('a.f-Stakeholder__c').unbind('click');
+            $('a.f-Stakeholder__c').click(function(e){
+            	//var input = $(this).parent().parent().parent().find('.f-Enrolled_Address_of_Lender__c');
+                //alert($(input).val());
+                //alert(input.id);
+                //return;
+                //$(this).parent().parent().parent().find('.f-Enrolled_Address_of_Individual__c').val('aaaaa');
+                
+                // US4823
+                if ("{!LineItemType.Line_Item_Category__r.Reconcile_Type__c}" == "Donations Received") {
+                    openCustomLookup('StakeholderSearchSelect', this,'isDonationReceived=true&fromLIForm=true');
+                } else {
+                    openCustomLookup('StakeholderSearchSelect', this,'fromLIForm=true');
+                }
+                //openCustomLookup('StakeholderSearchSelect', this); e.preventDefault(); return false;
+                
+                e.preventDefault(); return false;
+            });
+            //For US4495
+            $('a.f-Stakeholder_Registration__c').unbind('click');
+            $('a.f-Stakeholder_Registration__c').click(function(e){
+                var input = $(this).parent().parent().parent().find('.lookupInput').find('.f-Stakeholder__c');
+                //alert(input.val());
+                $(this).parent().children(0).val(input.val());
+            });
+            //filter line item status picklist
+            $('.f-Line_Item_Status__c option').each(function(){               
+                if({!Line_Item_Type__c.Disclosure_Claim_For_Payment__r.Version_Number__c == 0}){
+                    if($(this).val()=='Original'){
+                    	return;
+                    }
+                }
+                else if($(this).parent().hasClass('IsCloned')){
+                    if($(this).val()=='Same as Original' || $(this).val()=='Edited' || $(this).val()=='Deletion'){
+                        return;
+                    }
+                }
+                else{
+                    if($(this).val()=='Addition'){
+                        return;
+                    }
+                }
+                $(this).remove();
+            });
+            
+            resizeIframe();
+            // DE4555 - focus on first item
+            $('.focusItem').each(function(index){
+                this.focus();
+                return false;
+            });
+        }
+    
+    
+    function resizeIframe(){
+        for(var i=0; i<1000; i++){
+            $('#pnl-lineitem').css('max-height', ($(window).height()-i*15) + 'px');
+            if($(document).height() <= $(window).height()){
+                return;
+            }
+        }
+    }
+    LookupHoverDetail.prototype.position = function () {var a = getElementByIdCS(this.id),
+            b = getObjX(a),
+            c = getObjY(a),
+            d = a.offsetWidth,
+            e = a.offsetHeight,
+            f = getScrollX(),
+            g = getScrollY(),
+            h = getWindowWidth(),
+            i = getWindowHeight();
+        a = this.originalClass + " ";
+        if (c + e + this.height < g + i) {
+            a += "top";
+            c += e
+                } else {
+                    a += "bottom";
+                    c -= this.height
+                        }
+        if (b + d - this.bubbleOffset + this.width < f + h) {
+            a += "Left";
+            b = b + d / 2 - this.bubbleOffset
+                } else {
+                    a += "Right";
+                    b = b + d / 2 - this.width 
+                        }
+        this.hover.setStyle("left", "50%");
+        this.hover.setStyle("top", "50%");
+        this.hover.setStyle("margin-left", "-" + (this.width/2) + "px");
+        this.hover.setStyle("margin-top", "-" + (this.height/2) + "px");
+        $wrapdiv = $(this.hover.div).children('div').first()[0];
+        $wrapdiv.className = a;
+        if ($wrapdiv) if (b = Util.hasStyleEndsWith($wrapdiv, "Override")) {
+            delStyleClass(this.hover.div, "lookupHoverDetailOverridable");
+            delStyleClass($wrapdiv, b);
+            addStyleClass(this.hover.div, b)
+                }
+                
+       //HanhLuu:DE4685:start
+       var start = ('lookup').length;
+       var selectedId = this.id;       
+       selectedId = selectedId.substring(start,start+15);
+       $("input[name='edit']").hide();         
+       $("input[name='view']").click(function() {       		  		
+       		window.open('/' +selectedId ,'ViewDetail','width=1200,height=680,scrollbars=1,center=1,resizable=1');
+       });
+       //HanhLuu:DE4685:end
+       
+    };
+    
+    $(document).keypress(function(e) {
+        if(e.which == 13) {
+            if ($('#hiddenIsEdit').val() == "true") {
+                QuickSaveJS();
+            }
+        	e.preventDefault();
+        }
+    });
+    
+    function FillAddress(itemId,value) {
+    	//alert('return: '  + value);    	
+    	//return;
+    	var input = document.getElementById(itemId);;
+    	if('{!Labels[LineItemType.Line_Item_Category__r.Reference_Number__c].Content__c}' == 'Reportable Political Donations Received General (Not received at a Fundraising Function or Venture)'
+    	|| '{!Labels[LineItemType.Line_Item_Category__r.Reference_Number__c].Content__c}' == 'Reportable Political Donations Received at Fundraising Function(s) or Venture(s)'){
+    		//input = $(itemId).parent().parent().parent().find('.f-Enrolled_Address_of_Individual__c');
+    		$(input).parent().parent().parent().find('.f-Enrolled_Address_of_Individual__c').val(value);
+    	}
+    	else if('{!Labels[LineItemType.Line_Item_Category__r.Reference_Number__c].Content__c}' == 'Reportable Loans'){
+    		//input = $(itemId).parent().parent().parent().find('.f-Enrolled_Address_of_Lender__c');
+    		$(input).parent().parent().parent().find('.f-Enrolled_Address_of_Lender__c').val(value);
+    	}    	
+    	//alert('return: ' + itemId + ' - ' + value);
+    	//alert('return: ' + input + ' - ' + value);
+    	//input.val(value);
+    }
+    </script>
+    
+    <apex:form id="myForm">
+        <apex:actionFunction name="Sort" action="{!QueryLineItemTypes}" rerender="myForm" status="overlayStatus">
+            <apex:param name="sortByColumn" value="" assignTo="{!LineItemPagingInfo.OrderBy}"/>
+            <apex:param name="sortDirection" value="" assignTo="{!LineItemPagingInfo.OrderDirection}"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="Display" action="{!QueryLineItemTypes}" rerender="myForm" status="overlayStatus"/>
+        <apex:actionFunction name="NilChecked" action="{!Nil_Checked}" rerender="myForm" status="overlayStatus"/>
+        <apex:actionFunction name="QuickSaveJS" action="{!btnQuickSaveJS_Click}" status="overlayStatus" rerender="myForm"/>        
+        <apex:outputPanel id="pnlPageMessages">    
+            <apex:pageMessages escape="false" />
+        </apex:outputPanel>
+        
+        <apex:pageBlock mode="maindetail">
+            <p>
+                {!lineItemTypeLabel}
+                <!--{!Labels[LineItemType.Line_Item_Category__r.Reference_Number__c].Content__c}-->
+            </p><br/>
+            <apex:pageBlockSection columns="3">                
+                <!--<apex:inputField value="{!LineItemType.Nil_Disclosure_Claim_for_Payment__c}" rendered="{!IsEdit && (LineItemWrapperList.size == 0 || !LineItemType.Line_Item_Category__r.Add_Row__c)}" 
+                	 onclick="NilChecked();"/>                
+                <apex:outputField value="{!LineItemType.Nil_Disclosure_Claim_for_Payment__c}" rendered="{!!IsEdit || (LineItemWrapperList.size > 0 && LineItemType.Line_Item_Category__r.Add_Row__c)}"/>-->
+                <apex:inputField value="{!Disclosure.Nil_Disclosure__c}" rendered="{!IsEdit && (LineItemWrapperList.size == 0 || !LineItemType.Line_Item_Category__r.Add_Row__c)}" 
+                	 onclick="NilChecked();"/>                
+                <apex:outputField value="{!Disclosure.Nil_Disclosure__c}" rendered="{!!IsEdit || (LineItemWrapperList.size > 0 && LineItemType.Line_Item_Category__r.Add_Row__c)}"/>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel >
+                        <apex:commandButton value="Add Line Item" action="{!btnAddRow_Click}" rendered="{!IsEdit && !Disclosure.Nil_Disclosure__c && LineItemType.Line_Item_Category__r.Add_Row__c}" 
+                        	status="overlayStatus" rerender="pnlPageMessages, myForm"/>
+                        <apex:commandButton value="Quick Save" action="{!btnQuickSave_Click}" rendered="{!IsEdit}" status="overlayStatus" rerender="myForm"/>
+                        <apex:commandButton value="Save" action="{!btnSaveClose_Click}" rendered="{!IsEdit}" />
+                        <apex:commandButton value="Cancel" action="{!btnCancel_Click}" rendered="{!IsEdit}" immediate="true" status="overlayStatus" rerender="myForm"/>
+                        
+                        <apex:commandButton value="Edit" action="{!btnEdit_Click}" rendered="{!!IsEdit}" status="overlayStatus" rerender="myForm" immediate="true"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel > 
+                        Record per page&nbsp;&nbsp;
+                        <apex:selectList label="Record per page " size="1" value="{!LineItemPagingInfo.PageSize}" onchange="Display();">
+                            <apex:selectOptions value="{!numberItemPerPageOptions}"/>
+                        </apex:selectList>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+            </apex:pageBlockSection>
+            <input type="hidden" value="{!IsEdit}" id="hiddenIsEdit"/>
+            <div id="pnl-lineitem" style="width:100%;max-width:100%;{!if(isEdit,'overflow-x:scroll;overflow-y:auto;' ,'overflow:auto;')}">
+                <!--<div id="pnl-lineitem" style="width:100%;max-width:100%;overflow-x:scroll;overflow-y:auto">-->
+                <apex:pageBlockTable var="lineItem" value="{!LineItemWrapperList}" style="width:100%">
+                    <apex:column >
+                        <apex:outputPanel rendered="{!lineItem.isEdit}" style="white-space:nowrap" >
+                            <apex:commandLink action="{!btnSaveRow_Click}" value="Save" status="overlayStatus" rerender="pnlPageMessages, myForm">
+                                <apex:param name="LineItemId" value="{!lineItem.Id}"/>
+                            </apex:commandLink>
+                            &nbsp;
+                            <apex:commandLink action="{!btnCancelRow_Click}" value="Cancel" status="overlayStatus" rerender="pnlPageMessages, myForm" immediate="true">
+                                <apex:param name="LineItemId" value="{!lineItem.Id}"/>
+                            </apex:commandLink>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!NOT(lineItem.isEdit)}" style="white-space:nowrap" >
+                            <apex:commandLink action="{!btnEditRow_Click}" value="Edit" status="overlayStatus" rerender="pnlPageMessages, myForm" immediate="true">
+                                <apex:param name="LineItemId" value="{!lineItem.Id}"/>
+                            </apex:commandLink>
+                            &nbsp;
+                            <apex:commandLink action="{!btnDelRow_Click}"  onclick="if(!confirm('The line item will be deleted pernamently. Proceed?')) return false;" 
+                            	value="Del" status="overlayStatus" rerender="pnlPageMessages, myForm" immediate="true"
+                            	rendered="{!LineItemType.Line_Item_Category__r.Remove_Row__c && lineItem.Item.Cloned_Line_Item__c == null}">
+                                <apex:param name="LineItemId" value="{!lineItem.Id}"/>
+                            </apex:commandLink>
+                        </apex:outputPanel>
+                    </apex:column>
+                    
+                    <apex:column rendered="{!IsFunctionOrVenture && !FieldSetContainsFunctionOrVenture}">
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                <apex:commandLink onClick="Sort('Function_or_Venture__c','{!IF(LineItemPagingInfo.OrderBy != 'Function_or_Venture__c', 'ASC', IF(LineItemPagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}');return true;" 
+                                value="Function or Venture {!IF(LineItemPagingInfo.OrderBy != 'Function_or_Venture__c', '', IF(LineItemPagingInfo.OrderDirection == 'ASC', '▲', '▼'))}" reRender="myForm" status="overlayStatus">
+                                </apex:commandLink>
+                                <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields.Function_or_Venture__c.InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields.Function_or_Venture__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:selectList multiselect="false" size="1" value="{!lineItem.Item.Function_or_Venture__c}" styleclass="f-Function_or_Venture__c {!IF(isAddRowClick && (lineItem.Id == (recordCounter - 1)),'focusItem','')}" rendered="{!lineItem.IsEdit}">
+                            <apex:selectOptions value="{!OptionsFunctionOrVenture}"/> 
+                        </apex:selectList> 
+                        <apex:outputField value="{!lineItem.Item.Function_or_Venture__c}" styleclass="f-Function_or_Venture__c" rendered="{!!lineItem.IsEdit}"/>
+                    </apex:column>
+                    
+                    <apex:repeat var="f" value="{!MapLineItemFieldSets['X' + LineItemType.Line_Item_Category__r.Reference_Number__c].Fields}">
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputPanel >
+                                    <apex:commandLink onClick="Sort('{!f.FieldPath}','{!IF(LineItemPagingInfo.OrderBy != f.FieldPath, 'ASC', IF(LineItemPagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}');return true;" 
+                                    value="{!f.label} {!IF(LineItemPagingInfo.OrderBy != f.FieldPath, '', IF(LineItemPagingInfo.OrderDirection == 'ASC', '▲', '▼'))}" reRender="myForm" status="overlayStatus">
+                                    </apex:commandLink>
+                                    <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                        <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                    </apex:outputText>
+                                </apex:outputPanel>
+                            </apex:facet>
+                            
+                            <!-- for BK
+                            <apex:inputField value="{!lineItem.Item[f]}" styleclass="f-{!f.FieldPath}" rendered="{!lineItem.IsEdit && f.FieldPath != 'Function_or_Venture__c'}" required="{!f.Required || f.DbRequired}"/>
+                            -->
+                            <!--If LineItemType.Nil_Disclosure_Claim_for_Payment__c == false-->
+                            <apex:inputField value="{!lineItem.Item[f]}" styleclass="f-{!f.FieldPath} {!IF(isAddRowClick && (lineItem.Id == (recordCounter - 1)),'focusItem','')}" required="{!f.Required || f.DbRequired}"
+                            rendered="{!
+                                lineItem.IsEdit && LineItemType.Nil_Disclosure_Claim_for_Payment__c == false 
+                                && !(
+                            		f.FieldPath == 'Function_or_Venture__c' 
+                                	|| f.FieldPath == 'Type_of_Expenditure__c' 
+                            	)
+                            }"/>
+                            <apex:outputField value="{!lineItem.Item[f]}" styleclass="f-{!f.FieldPath}" 
+                            rendered="{!
+                                lineItem.IsEdit && LineItemType.Nil_Disclosure_Claim_for_Payment__c == false 
+                                && (
+                            		f.FieldPath == 'Function_or_Venture__c' 
+                                	|| f.FieldPath == 'Type_of_Expenditure__c' 
+                            	)
+                            }"/>
+                            
+                            <!--If LineItemType.Nil_Disclosure_Claim_for_Payment__c == true-->
+                            
+                            <apex:inputField value="{!lineItem.Item[f]}" styleclass="f-{!f.FieldPath} {!IF(isAddRowClick && (lineItem.Id == (recordCounter - 1)),'focusItem','')}" required="{!f.Required || f.DbRequired}"
+                            rendered="{!
+                                lineItem.IsEdit && LineItemType.Nil_Disclosure_Claim_for_Payment__c == true 
+                                && !(
+                                    f.FieldPath == 'Total_Value_of_Small_Donations_Made__c' 
+                                    || f.FieldPath == 'Total_Value_of_Small_Donations_Received__c' 
+                                    || f.FieldPath == 'Total_Number_of_Small_Donations_Received__c' 
+                                    || f.FieldPath == 'Total_Number_of_Small_Donations_Made__c' 
+                                    || f.FieldPath == 'Amount__c'
+                                	|| f.FieldPath == 'Type_of_Expenditure__c'
+                            	)
+                            }"/>
+                            <apex:outputField value="{!lineItem.Item[f]}" styleclass="f-{!f.FieldPath}" 
+                            rendered="{!
+                                lineItem.IsEdit && LineItemType.Nil_Disclosure_Claim_for_Payment__c == true
+                                && (
+                                    f.FieldPath == 'Total_Value_of_Small_Donations_Made__c' 
+                                    || f.FieldPath == 'Total_Value_of_Small_Donations_Received__c' 
+                                    || f.FieldPath == 'Total_Number_of_Small_Donations_Received__c' 
+                                    || f.FieldPath == 'Total_Number_of_Small_Donations_Made__c' 
+                                    || f.FieldPath == 'Amount__c'
+                                	|| f.FieldPath == 'Type_of_Expenditure__c'
+                            	)
+                            }"/>
+                            
+                            <apex:selectList multiselect="false" size="1" value="{!lineItem.Item.Function_or_Venture__c}" styleclass="f-Function_or_Venture__c {!IF(isAddRowClick && (lineItem.Id == (recordCounter - 1)),'focusItem','')}" rendered="{!lineItem.IsEdit && f.FieldPath == 'Function_or_Venture__c'}">
+                                <apex:selectOptions value="{!OptionsFunctionOrVenture}"/> 
+                            </apex:selectList> 
+                            <apex:outputField value="{!lineItem.Item[f]}" styleclass="f-{!f.FieldPath}" rendered="{!!lineItem.IsEdit}"/>
+                        </apex:column>
+                    </apex:repeat>
+                    
+                    <apex:column rendered="{!isCloneDisclosureObject}">
+                        <apex:facet name="header">Status</apex:facet>
+                        <apex:outputField value="{!lineItem.Item.Line_Item_Status_Formula__c}" rendered="{!!lineItem.IsEdit}"/>
+                        <apex:inputField value="{!lineItem.Item.Line_Item_Status__c}" rendered="{!lineItem.IsEdit}" styleclass="{!IF(lineItem.Item.Cloned_Line_Item__c == null,'f-Line_Item_Status__c','f-Line_Item_Status__c IsCloned')}"/>
+                    </apex:column>
+                    
+                    <apex:column rendered="{!isCloneDisclosureObject}">
+                        <apex:facet name="header">Cloned from</apex:facet>
+                        <div style="position:relative">
+                            <!--<a href="/{!lineItem.Item.Cloned_Line_Item__c}" -->
+                            <a id="{!lineItem.Item.Cloned_Line_Item__c}" 
+                            onmouseout="LookupHoverDetail.getHover('{!lineItem.Item.Cloned_Line_Item__c}').hide();" 
+                            onmouseover="LookupHoverDetail.getHover('{!lineItem.Item.Cloned_Line_Item__c}', '/apex/viewlineitemhoverframe?id={!lineItem.Item.Cloned_Line_Item__c}&isdtp=vw').show();">
+                                {!lineItem.Item.Cloned_Line_Item__r.Name}
+                            </a>
+                        </div>
+                    </apex:column>
+                    
+                    <apex:column >
+                        <apex:facet name="header">Notes</apex:facet>
+                        <!--<apex:actionFunction name="hasNoteValue" action="{!hasNoteValue}">
+                            <apex:param name="lineItemId" value="" assignTo="{!lineItem.Item.Id}"/>                            
+                        </apex:actionFunction>-->
+                        
+                        <apex:commandLink value="Add" onclick="openLineItemNote('{!lineItem.Item.Id}');return false;" rendered="{!lineItem.IsExist &&!lineItem.IsNoteExist}"/>
+                        <apex:commandLink value="View" onclick="openLineItemNote('{!lineItem.Item.Id}');return false;" rendered="{!lineItem.IsExist && NOT!lineItem.IsNoteExist}"/>
+                        <!--<apex:commandLink value="View" onclick="openLineItemNote('{!lineItem.Item.Id}');" rendered="{!lineItem.IsExist}"/>-->
+                    </apex:column>
+                    
+                </apex:pageBlockTable>
+            </div>
+            <p>
+                <c:Pagination pager="{!LineItemPagingInfo}" action="{!buildPagingInfo}" rerender="myForm" status="overlayStatus"/>
+            </p>
+            <apex:pageBlockSection >
+                <apex:inputField value="{!LineItemType.Calculated_Count__c}" rendered="{!LineItemType.Line_Item_Category__r.Calculated_Total_Count__c}"/>
+                <apex:inputField styleClass="{!LineItemType.Id}_Form_Count" value="{!LineItemType.Form_Count__c}" rendered="{!isEdit && !LineItemType.Nil_Disclosure_Claim_for_Payment__c && LineItemType.Line_Item_Category__r.Form_Total_Count__c}"/>
+                <apex:outputField value="{!LineItemType.Form_Count__c}" rendered="{!(!isEdit || LineItemType.Nil_Disclosure_Claim_for_Payment__c) && LineItemType.Line_Item_Category__r.Form_Total_Count__c}"/>
+                <apex:inputField value="{!LineItemType.Calculated_Amount__c}" rendered="{!LineItemType.Line_Item_Category__r.Calculated_Total_Amount__c}"/>
+                <apex:inputField styleClass="{!LineItemType.Id}_Form_Amount" value="{!LineItemType.Form_Amount__c}" rendered="{!isEdit && !LineItemType.Nil_Disclosure_Claim_for_Payment__c && LineItemType.Line_Item_Category__r.Form_Total_Amount__c}"/>
+                <apex:outputField value="{!LineItemType.Form_Amount__c}" rendered="{!(!isEdit || LineItemType.Nil_Disclosure_Claim_for_Payment__c)&& LineItemType.Line_Item_Category__r.Form_Total_Amount__c}"/>                
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>    
+    
+</apex:page>

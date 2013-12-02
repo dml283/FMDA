@@ -1,0 +1,64 @@
+<apex:page controller="EligibleClaimController" showHeader="false" sideBar="false" tabstyle="Eligible_Claim_for_Payment__c" >
+<!-- Begin Default Content REMOVE THIS -->
+<style></style>
+<script>
+	function openEventSearch() {
+        var keyword = $('.show-Election_Event__c').text();
+      	var input = $('.f-Registration__c').parent().children(0);
+        var currentRegId = document.getElementById(input.attr('id') + '_lkid').value;
+		input = $('.f-Stakeholder__c').parent().children(0);
+        var currentStakeholderId = document.getElementById(input.attr('id') + '_lkid').value;
+
+        var url = '/apex/SearchElectionEvent?isdtp=vw&keyword=' + keyword + '&StakeID=' + currentStakeholderId  + '&RegID=' + currentRegId;
+        window.open(url, '_blank' , 'width=1200,height=600,scrollbars=1,center=1');
+    }
+    
+    $(function(){
+        {!StartUpScript}
+    })
+        
+   	function onAjaxStop() {
+        {!StartUpScript}
+    }
+    
+	
+</script>
+<apex:pageMessages />
+<c:CommonScripts ></c:CommonScripts>
+    <body class="hasMotif lookupTab  LookupSearchFrame  brandNoBgrImg">
+        <div class="lookup">
+            <div class="bPageTitle">
+                <div class="ptBody secondaryPalette">
+                    <div class="content"><img title="" class="pageTitleIcon" alt="" src="/s.gif"/>
+                        <h1>Lookup</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="pBody">
+            </div>            
+        </div>
+        <apex:form id="pnlForm">
+            <apex:messages />
+            <apex:outputPanel >
+            	<apex:inputText value="{!searchKeyWord}"/>
+            	<apex:commandButton value="Go!" action="{!doSearch}"/>
+            	<br/>
+            	<br/>
+            </apex:outputPanel>
+            
+            <apex:pageBlock title="Election Event" >
+            	<apex:pageBlockTable value="{!electionEvents}" var="item" rendered="{!electionEvents<>null}">
+            		<apex:column >
+	            		<apex:facet name="header">Name</apex:facet> 
+	                    <apex:commandLink value="{!item.name}" action="{!PickItem}" >
+	                        <apex:param name="itemId" value="{!item.Id}"/>
+	                    </apex:commandLink>
+                    </apex:column>
+            		<apex:column value="{!item.Ward__c}"/>
+            		<apex:column value="{!item.Term_Start_Date__c}"/>
+		        </apex:pageBlockTable> 
+            </apex:pageBlock>
+        </apex:form>
+        
+	</body>
+</apex:page>

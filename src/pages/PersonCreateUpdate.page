@@ -1,0 +1,333 @@
+<apex:page controller="PersonSearchController"  title="Entity Edit" tabstyle="Account">
+    <script>
+    $(function(){
+        {!StartUpScript}
+        onAjaxStop();
+    });
+    function onAjaxStop(){
+        $('.txt-capitalize').change(capitalize);
+        $('.txt-capitalize').change();
+    }
+    function copyAddressToPostal(){
+        $('.ShippingStreet').val($('.PersonMailingStreet').val());
+        $('.ShippingCity').val($('.PersonMailingCity').val());
+        $('.ShippingState').val($('.PersonMailingState').val());
+        $('.ShippingPostalCode').val($('.PersonMailingPostalCode').val());
+        $('.ShippingCountry').val($('.PersonMailingCountry').val());
+    }
+    function copyAddressToCampaign(){
+        $('.PersonOtherStreet').val($('.PersonMailingStreet').val());
+        $('.PersonOtherCity').val($('.PersonMailingCity').val());
+        $('.PersonOtherState').val($('.PersonMailingState').val());
+        $('.PersonOtherPostalCode').val($('.PersonMailingPostalCode').val());
+        $('.PersonOtherCountry').val($('.PersonMailingCountry').val());
+    }
+    
+    function capitalize() {
+        $(this).val($(this).val().toLowerCase().replace(/(?:^|\s|-|')\S/g, function(a) { return a.toUpperCase(); }));
+    }
+    
+    $(document).keypress(function(e) {
+        if(e.which == 13) {
+            SaveJS();
+            e.preventDefault(); 
+        }
+    });
+    
+    </script>
+    <apex:form id="myForm">
+        <apex:messages />
+        <c:CommonScripts ></c:CommonScripts>
+        <c:Overlay ></c:Overlay>
+        <apex:sectionHeader title="Stakeholder (Person) Edit"/>
+        <apex:actionFunction name="QuickSaveAccount" action="{!QuickSaveAccount}" rerender="wrapper" focus="wrapper" status="overlayStatus"/>
+        <apex:actionFunction name="SaveJS" action="{!SaveAccountAndClose}"/>
+        
+        <apex:pageBlock title="Stakeholder (Person) Create / Update" mode="edit">
+            <apex:pageBlockSection title="Electoral Roll Infomation" columns="1">
+                <apex:pageBlockTable style="width:100%;" value="{!ElectoralRoll}" var="item">
+                    <apex:column >
+                        <apex:facet name="header">
+                            FADMS Elector ID
+                        </apex:facet>
+                        <apex:outputText value="{!item.FadmsElectorId}" />
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            Salutation
+                        </apex:facet>
+                        <apex:outputText value="{!item.ElectorSalutation}" />
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            Given Name(s)
+                        </apex:facet>
+                        <apex:outputText value="{!item.ElectorGivenNames}" />
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            Surname
+                        </apex:facet>
+                        <apex:outputText value="{!item.ElectorFamilyName}" />
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            DOB
+                        </apex:facet>
+                        <apex:outputText value="{!item.ElectorDob}" />
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            Occupation
+                        </apex:facet>
+                        <apex:outputText value="{!item.ElectorOccupation}" />
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            Silent Elector
+                        </apex:facet>
+                        <apex:outputText value="{!item.ElectorSilent}" />
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            Street
+                        </apex:facet>
+                        <apex:outputText value="{!item.EnrolledAddress}" />
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            Locality
+                        </apex:facet>
+                        <apex:outputText value="{!item.EnrolledLocality}" />
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            Postcode
+                        </apex:facet>
+                        <apex:outputText value="{!item.EnrolledPostcode}" />
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            <div style="padding:10px 20px;font-weight:bold;color:green;">{!messageOnPersonCreateUpdate}</div>
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Back" action="{!Cancel}" immediate="true"/>
+                <!--<apex:commandButton value="Quick Save" action="{!QuickSaveAccount}" />-->
+                <apex:commandButton value="Save" action="{!SaveAccountAndClose}"  />
+                <apex:commandButton value="Copy Electoral Roll Information" action="{!CopyErToStakeholder}" status="overlayStatus" rerender="myForm"/>
+                <apex:commandButton value="Cancel" onclick="top.window.close(); return false;" />
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="Stakeholder Details" columns="3">
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Salutation.InlineHelpText}">
+                    <apex:outputLabel value="Title" />
+                    <apex:outputPanel >
+                        <apex:inputField value="{!PersonCon.Salutation}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.FADMS_Elector_ID__c.InlineHelpText}">
+                    <apex:outputLabel value="FADMS Elector ID" />
+                    <apex:outputPanel >
+                        <apex:outputField value="{!Acc.FADMS_Elector_ID__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                </apex:pageBlockSectionItem>
+                    
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.FirstName.InlineHelpText}">
+                    <apex:outputLabel value="Given Name(s)" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!PersonCon.FirstName}" styleclass="txt-capitalize" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Phone.InlineHelpText}">
+                    <apex:outputLabel value="Phone" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.Phone}"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonBirthdate.InlineHelpText}">
+                    <apex:outputLabel value="Date of Birth" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonBirthdate}"  onclick="setDateRange('birthday');"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.LastName.InlineHelpText}">
+                    <apex:outputLabel value="Surname" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!PersonCon.LastName}" styleclass="txt-capitalize"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMobilePhone.InlineHelpText}">
+                    <apex:outputLabel value="Mobile" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonMobilePhone}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Occupation__c.InlineHelpText}">
+                    <apex:outputLabel value="Occupation" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.Occupation__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Electoral_Roll_Name__c.InlineHelpText}">
+                    <apex:outputLabel value="Electoral Roll Name" />
+                    <apex:outputPanel >
+                        <apex:inputField value="{!Acc.Electoral_Roll_Name__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Fax.InlineHelpText}">
+                    <apex:outputLabel value="Fax" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.Fax}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonEmail.InlineHelpText}">
+                    <apex:outputLabel value="Email" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonEmail}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Description.InlineHelpText}">
+                    <apex:outputLabel value="Description" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.Description}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Electoral Address" columns="3">
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingStreet.InlineHelpText}">
+                    <apex:outputLabel value="Street" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonMailingStreet}" styleclass="PersonMailingStreet" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingCity.InlineHelpText}">
+                    <apex:outputLabel value="City" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonMailingCity}" styleclass="PersonMailingCity"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingState.InlineHelpText}">
+                    <apex:outputLabel value="State" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonMailingState}" styleclass="PersonMailingState"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingPostalCode.InlineHelpText}">
+                    <apex:outputLabel value="Postcode" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonMailingPostalCode}" styleclass="PersonMailingPostalCode"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingCountry.InlineHelpText}">
+                    <apex:outputLabel value="Country" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonMailingCountry}" styleclass="PersonMailingCountry"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Postal Address" columns="3">
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingStreet.InlineHelpText}">
+                    <apex:outputLabel value="Street" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.ShippingStreet}" styleclass="ShippingStreet"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingCity.InlineHelpText}">
+                    <apex:outputLabel value="City" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.ShippingCity}" styleclass="ShippingCity"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingState.InlineHelpText}">
+                    <apex:outputLabel value="State" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.ShippingState}" styleclass="ShippingState"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingPostalCode.InlineHelpText}">
+                    <apex:outputLabel value="Postcode" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.ShippingPostalCode}" styleclass="ShippingPostalCode"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingCountry.InlineHelpText}">
+                    <apex:outputLabel value="Country" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.ShippingCountry}" styleclass="ShippingCountry"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <input type="button" value="Copy Electoral Address" onclick="copyAddressToPostal();"  />
+                    <!--<apex:commandButton value="Copy Address" action="{!CopyAddress}"  />-->
+                </apex:pageBlockSectionItem>
+                
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Campaign HQ Address" columns="3">
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonOtherStreet.InlineHelpText}">
+                    <apex:outputLabel value="Street" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonOtherStreet}" styleclass="PersonOtherStreet"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonOtherCity.InlineHelpText}">
+                    <apex:outputLabel value="City" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonOtherCity}" styleclass="PersonOtherCity"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonOtherState.InlineHelpText}">
+                    <apex:outputLabel value="State" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonOtherState}" styleclass="PersonOtherState"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonOtherPostalCode.InlineHelpText}">
+                    <apex:outputLabel value="Postcode" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonOtherPostalCode}" styleclass="PersonOtherPostalCode"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonOtherCountry.InlineHelpText}">
+                    <apex:outputLabel value="Country" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:inputField value="{!Acc.PersonOtherCountry}" styleclass="PersonOtherCountry"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <input type="button" value="Copy Electoral Address" onclick="copyAddressToCampaign();"  />
+                    <!--<apex:commandButton value="Copy Address" action="{!CopyAddress}"  />-->
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

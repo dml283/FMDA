@@ -1,0 +1,385 @@
+<apex:page tabstyle="Line_Item__c" standardcontroller="Disclosure_Claim_for_Payment__c" 
+	extensions="PoliticalReconcileLineItems" sidebar="false" title="Political Reconcile Line Items">
+    <c:Overlay ></c:Overlay>
+    <c:CommonScripts ></c:CommonScripts>
+    <script>
+    $(function(){
+        onAjaxStop();
+    })
+    function onAjaxStop() {
+        $(".pbSubheader.first").removeClass("first");
+    }
+    
+    function reconcileSelected(stakeholderId){
+        var receivedLineItems = $('.lineitem-received-' + stakeholderId + ':checked');
+        var madeLineItems = $('.lineitem-made-' + stakeholderId + ':checked');
+        
+        if(receivedLineItems.length == 0 || madeLineItems.length == 0){
+            alert('Please select at least one row on both Donations Received and Donations Made');
+            return false;
+        }
+        else if(receivedLineItems.length > 1 && madeLineItems.length > 1){
+            alert('Not Reconciled! Multiple rows cannot be reconciled. Please select a single row on either the Donations Received or Donations Made');
+            return false;
+        }
+        else {
+            var receivedSum = 0;
+            var madeSum = 0;
+            receivedLineItems.parent().children('.hdn-amount').each(function() {
+                receivedSum += Number($(this).val());
+            });
+            madeLineItems.parent().children('.hdn-amount').each(function() {
+                madeSum += Number($(this).val());
+            });
+            if(receivedSum != madeSum){
+                alert('The amounts from the selected Donations Received and Donations Made are not equal');
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    //DE4657
+    function enterKeyPress(e){
+        if (e.keyCode == 13) {            
+            $('.btn-Search').click();
+            e.preventDefault();
+            //alert(id);
+        }
+    }
+    </script>
+    <style type="text/css">
+        .list .headerRow th{white-space:normal !important;}
+        .list td.dataCell,.list td.dataCell span{}
+        .bPageBlock .pbTitle h2{font-size: 1.5em !important;}
+        .bPageBlock .bPageBlock .pbTitle h2{font-size: 1.0em !important;}
+    </style>
+    <apex:form id="myForm">
+        <script>
+        $(function(){{!StartUpScript}});
+        </script>
+        <apex:sectionHeader title="Political Reconcile Line Items"/>
+        
+        <apex:pageMessages escape="false"></apex:pageMessages>        
+        
+        <div style="text-align:center" class="pbs">
+            <apex:commandButton value="Back" action="{!Cancel}"/>
+            <!--<apex:commandButton value="Audit Line Item" onclick="window.location.href='/apex/AuditLineItemForm?do={!Disclosure_Claim_for_Payment__c.Id}'; return false;"/>-->
+        </div>
+        
+        <div class="pbs">
+            <apex:inputText value="{!SearchKey}" onkeypress="return enterKeyPress(event);"/>
+            <apex:commandButton value="Search" action="{!btnSearch_Click}" styleClass="btn-Search"/>
+            <apex:repeat var="item" value="{!FilterKeys}">&nbsp;&nbsp;|&nbsp;&nbsp;
+                <apex:commandLink value="{!item}" action="{!btnFilter_Click}">
+                    <apex:param name="filterkey" value="{!item}" assignTo="{!FilterKey}"/>
+                </apex:commandLink>
+            </apex:repeat>
+        </div><br/>
+        
+        <apex:actionFunction name="lineItemAdded" action="{!listLineItem_Added}" status="overlayStatus" rerender="myForm">
+            <apex:param name="lineItemId" value=""/>
+        </apex:actionFunction>
+        <apex:repeat var="block" value="{!Results}">
+            <apex:pageBlock title="{!block.title + block.Disclosure.Stakeholder__r.Name}" mode="detail">
+                <apex:repeat value="{!block.StakeList}" var="stake">
+                    <apex:pageBlock title="{!if(stake.Stakeholder.Name != null,'Donor:','')} {!stake.Stakeholder.Name}" mode="edit">
+                        <table cellpadding="0" cellspacing="1" border="0">
+                            <tr>
+                                <td style="vertical-align:top">
+                                    <apex:pageBlockSection title="Donations Received" columns="1" collapsible="true">
+                                        <apex:pageBlockTable var="item" value="{!stake.DonationReceivedItems}">
+                                            <apex:facet name="header">
+                                                <apex:outputPanel >
+                                                    <apex:commandButton value="Add Audit Line Item" action="{!listLineItem_Added}" rendered="false" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Received" />
+                                                    </apex:commandButton>
+                                                    <apex:commandButton value="Reconcile Selected" onclick="if(!reconcileSelected('{!stake.stakeHolder.Id}')) return false;" action="{!btnReconcile_Click}" rerender="myForm" status="overlayStatus">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                    </apex:commandButton>
+                                                </apex:outputPanel>                                   
+                                            </apex:facet>
+                                            <apex:column style="white-space:nowrap" >
+                                                <apex:facet name="header">
+                                                    <apex:inputCheckbox onclick="$(this).parents('table').first().find('input:[type=checkbox]').not($(this)).attr('checked', $(this).attr('checked'))"/>
+                                                </apex:facet>
+                                                <apex:outputPanel >
+                                                    <apex:inputCheckbox value="{!item.IsChecked}" styleclass="lineitem-received-{!stake.stakeHolder.Id} ckb-lineitem"/>
+                                                    <input type="hidden" class="hdn-lineitem-id" value="{!item.Item.Id}" />
+                                                    <input type="hidden" value="{!item.Item.Amount_or_Value_of_Donation__c}" class="hdn-amount"/>
+                                                </apex:outputPanel>
+                                            </apex:column>
+                                            <apex:column >
+                                                <apex:facet name="header">Action</apex:facet>
+                                                <apex:outputPanel rendered="{!!item.IsEdit}">
+                                                    <apex:commandLink value="Edit" action="{!listLineItem_Command}" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Received" />
+                                                        <apex:param name="lineItemId" value="{!item.Id}" />
+                                                        <apex:param name="command" value="edit" />
+                                                    </apex:commandLink>&nbsp;|&nbsp;
+                                                    <apex:commandLink value="Del" action="{!listLineItem_Command}" onclick="if(!confirm('Are you sure you want to delete this record?')) return false;" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Received" />
+                                                        <apex:param name="lineItemId" value="{!item.Id}" />
+                                                        <apex:param name="command" value="delete" />
+                                                    </apex:commandLink>&nbsp;|&nbsp;
+                                                    <apex:commandLink value="Add" action="{!listLineItem_Command}" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Received" />
+                                                        <apex:param name="lineItemId" value="{!item.Id}" />
+                                                        <apex:param name="command" value="add" />
+                                                    </apex:commandLink>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel rendered="{!item.IsEdit}">
+                                                    <apex:commandLink value="Save" action="{!listLineItem_Command}" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Received" />
+                                                        <apex:param name="lineItemId" value="{!item.Id}" />
+                                                        <apex:param name="command" value="save" />
+                                                    </apex:commandLink>&nbsp;|&nbsp;
+                                                    <apex:commandLink value="Cancel" action="{!listLineItem_Command}" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Received" />
+                                                        <apex:param name="lineItemId" value="{!item.Id}" />
+                                                        <apex:param name="command" value="cancel" />
+                                                    </apex:commandLink>
+                                                </apex:outputPanel>
+                                            </apex:column>
+                                            <apex:column >
+                                                <apex:facet name="header">
+                                                    <apex:outputPanel >
+                                                        <apex:commandLink value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortBy != 'Name','',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortDirection == 'ASC', '▲', '▼'))}Line Item Number" action="{!btnSort_Click}" status="overlayStatus" rerender="myForm">
+                                                            <apex:param name="blockType" value="Donations Received"/>
+                                                            <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}"/>
+                                                            <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                            <apex:param name="sortBy" value="Name"/>
+                                                            <apex:param name="sortDirection" value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortBy != 'Name','ASC',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                                        </apex:commandLink>
+                                                        <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields.Name.InlineHelpText != null}">
+                                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields.Name.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                                        </apex:outputText>
+                                                    </apex:outputPanel>
+                                                </apex:facet>
+                                                <a id="{!item.Item.Id}" style="text-decoration:underline;" href="javascript:void(0)"
+                                                onmouseout="LookupHoverDetail.getHover('{!item.Item.Id}').hide();" 
+                                                onmouseover="LookupHoverDetail.getHover('{!item.Item.Id}', '/apex/viewlineitemhoverframe?id={!item.Item.Id}&isdtp=vw').show();">
+                                                    {!item.Item.Name}
+                                                </a>
+                                            </apex:column>
+                                            <apex:column >
+                                                <apex:facet name="header">
+                                                    <apex:outputPanel >
+                                                        <apex:commandLink value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortBy != 'Line_Item_Type__c','',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortDirection == 'ASC', '▲', '▼'))}Line Item Type" action="{!btnSort_Click}" status="overlayStatus" rerender="myForm">
+                                                            <apex:param name="blockType" value="Donations Received"/>
+                                                            <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}"/>
+                                                            <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                            <apex:param name="sortBy" value="Line_Item_Type__c"/>
+                                                            <apex:param name="sortDirection" value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortBy != 'Line_Item_Type__c','ASC',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                                        </apex:commandLink>
+                                                        <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields.Line_Item_Type__c.InlineHelpText != null}">
+                                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields.Line_Item_Type__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                                        </apex:outputText>
+                                                    </apex:outputPanel>
+                                                </apex:facet>
+                                                <apex:outputField value="{!item.Item.Line_Item_Type__r.Line_Item_Category__r.Line_Item_Category__c}" rendered="{!!item.IsEdit || item.isExist || item.Item.Line_Item__c != null}"/>
+                                                <apex:selectList value="{!item.Item.Line_Item_Type__c}" size="1" rendered="{!Item.IsEdit && !item.isExist && item.Item.Line_Item__c == null}">
+                                                    <apex:selectOptions value="{!DRLineItemTypeOptionMap[block.Disclosure.Id]}" /> 
+                                                </apex:selectList>
+                                            </apex:column>
+                                            <apex:repeat var="f" value="{!MapLineItemFieldSets['Reconcile_Donations_Received'].Fields}">
+                                                <apex:column >
+                                                    <apex:facet name="header">
+                                                        <apex:outputPanel >
+                                                            <apex:commandLink value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortBy != f.fieldPath,'',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortDirection == 'ASC', '▲', '▼'))}{!f.label}" action="{!btnSort_Click}" status="overlayStatus" rerender="myForm">
+                                                                <apex:param name="blockType" value="Donations Received"/>
+                                                                <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}"/>
+                                                                <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                                <apex:param name="sortBy" value="{!f.fieldPath}"/>
+                                                                <apex:param name="sortDirection" value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortBy != f.fieldPath,'ASC',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Received'].SortDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                                            </apex:commandLink>
+                                                            <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields[f.fieldPath].InlineHelpText != null}">
+                                                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields[f.fieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                                            </apex:outputText>
+                                                        </apex:outputPanel>
+                                                    </apex:facet>
+                                                    <apex:outputField value="{!item.Item[f.fieldPath]}" rendered="{!!item.IsEdit}"/>                     
+                                                    <apex:inputField value="{!item.Item[f.fieldPath]}" rendered="{!item.IsEdit}"/>
+                                                </apex:column>
+                                            </apex:repeat>
+                                            <apex:column >
+                                                <apex:facet name="header">Reconcile Status</apex:facet>
+                                                <apex:outputText rendered="{!item.IsReconciled}">
+                                                    <a id="status{!item.Item.Id}" style="text-decoration:underline;" href="javascript:void(0)"
+                                                    onmouseout="LookupHoverDetail.getHover('status{!item.Item.Id}').hide();" 
+                                                    onmouseover="LookupHoverDetail.getHover('status{!item.Item.Id}', '/apex/ViewReconcileHoverFrame?id={!item.Item.Id}&isdtp=vw').show();">
+                                                        Reconciled
+                                                    </a>
+                                                </apex:outputText>
+                                                <apex:outputText rendered="{!!item.IsReconciled}">Not Reconciled</apex:outputText>
+                                            </apex:column>
+                                        </apex:pageBlockTable>
+                                    </apex:pageBlockSection>
+                                </td>
+                                <td style="vertical-align:top">
+                                    <apex:pageBlockSection title="Donations Made" columns="1" collapsible="true">
+                                        <apex:pageBlockTable var="item" value="{!stake.DonationMadeItems}">
+                                            <apex:facet name="header">
+                                                <apex:outputPanel >
+                                                    <apex:commandButton value="Add Audit Line Item" action="{!listLineItem_Added}" rendered="false" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Made" />
+                                                    </apex:commandButton>
+                                                    <apex:commandButton value="Reconcile Selected" onclick="if(!reconcileSelected('{!stake.stakeHolder.Id}')) return false;" action="{!btnReconcile_Click}" rerender="myForm" status="overlayStatus">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                    </apex:commandButton>
+                                                </apex:outputPanel>                                   
+                                            </apex:facet>
+                                            <apex:column style="white-space:nowrap" >
+                                                <apex:facet name="header">
+                                                    <apex:inputCheckbox onclick="$(this).parents('table').first().find('input:[type=checkbox]').not($(this)).attr('checked', $(this).attr('checked'))"/>
+                                                </apex:facet>
+                                                <apex:outputPanel >
+                                                    <apex:inputCheckbox value="{!item.IsChecked}" styleclass="lineitem-made-{!stake.stakeHolder.Id} ckb-lineitem"/>
+                                                    <input type="hidden" class="hdn-lineitem-id" value="{!item.Item.Id}" />
+                                                    <input type="hidden" value="{!item.Item.Amount_or_Value_of_Donation__c}" class="hdn-amount"/>
+                                                </apex:outputPanel>
+                                            </apex:column>
+                                            <apex:column >
+                                                <apex:facet name="header">Action</apex:facet>
+                                                <apex:outputPanel rendered="{!!item.IsEdit}">
+                                                    <apex:commandLink value="Edit" action="{!listLineItem_Command}" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Made" />
+                                                        <apex:param name="lineItemId" value="{!item.Id}" />
+                                                        <apex:param name="command" value="edit" />
+                                                    </apex:commandLink>&nbsp;|&nbsp;
+                                                    <apex:commandLink value="Del" action="{!listLineItem_Command}" onclick="if(!confirm('Are you sure you want to delete this record?')) return false;" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Made" />
+                                                        <apex:param name="lineItemId" value="{!item.Id}" />
+                                                        <apex:param name="command" value="delete" />
+                                                    </apex:commandLink>&nbsp;|&nbsp;
+                                                    <apex:commandLink value="Add" action="{!listLineItem_Command}" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Made" />
+                                                        <apex:param name="lineItemId" value="{!item.Id}" />
+                                                        <apex:param name="command" value="add" />
+                                                    </apex:commandLink>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel rendered="{!item.IsEdit}">
+                                                    <apex:commandLink value="Save" action="{!listLineItem_Command}" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Made" />
+                                                        <apex:param name="lineItemId" value="{!item.Id}" />
+                                                        <apex:param name="command" value="save" />
+                                                    </apex:commandLink>&nbsp;|&nbsp;
+                                                    <apex:commandLink value="Cancel" action="{!listLineItem_Command}" status="overlayStatus" rerender="myForm">
+                                                        <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}" />
+                                                        <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                        <apex:param name="blockType" value="Donations Made" />
+                                                        <apex:param name="lineItemId" value="{!item.Id}" />
+                                                        <apex:param name="command" value="cancel" />
+                                                    </apex:commandLink>
+                                                </apex:outputPanel>
+                                            </apex:column>
+                                            <apex:column >
+                                                <apex:facet name="header">
+                                                    <apex:outputPanel >
+                                                        <apex:commandLink value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortBy != 'Name','',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortDirection == 'ASC', '▲', '▼'))}Line Item Number" action="{!btnSort_Click}" status="overlayStatus" rerender="myForm">
+                                                            <apex:param name="blockType" value="Donations Made"/>
+                                                            <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}"/>
+                                                            <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                            <apex:param name="sortBy" value="Name"/>
+                                                            <apex:param name="sortDirection" value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortBy != 'Name','ASC',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                                        </apex:commandLink>
+                                                        <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields.Name.InlineHelpText != null}">
+                                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields.Name.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                                        </apex:outputText>
+                                                    </apex:outputPanel>
+                                                </apex:facet>
+                                                <a id="{!item.Item.Id}" style="text-decoration:underline;" href="javascript:void(0)"
+                                                onmouseout="LookupHoverDetail.getHover('{!item.Item.Id}').hide();" 
+                                                onmouseover="LookupHoverDetail.getHover('{!item.Item.Id}', '/apex/viewlineitemhoverframe?id={!item.Item.Id}&isdtp=vw').show();">
+                                                    {!item.Item.Name}
+                                                </a>
+                                            </apex:column>
+                                            <apex:column >
+                                                <apex:facet name="header">
+                                                    <apex:outputPanel >
+                                                        <apex:commandLink value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortBy != 'Line_Item_Type__c','',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortDirection == 'ASC', '▲', '▼'))}Line Item Type" action="{!btnSort_Click}" status="overlayStatus" rerender="myForm">
+                                                            <apex:param name="blockType" value="Donations Made"/>
+                                                            <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}"/>
+                                                            <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                            <apex:param name="sortBy" value="Line_Item_Type__c"/>
+                                                            <apex:param name="sortDirection" value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortBy != 'Line_Item_Type__c','ASC',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                                        </apex:commandLink>
+                                                        <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields.Line_Item_Type__c.InlineHelpText != null}">
+                                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields.Line_Item_Type__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                                        </apex:outputText>
+                                                    </apex:outputPanel>
+                                                </apex:facet>
+                                                <apex:outputField value="{!item.Item.Line_Item_Type__r.Line_Item_Category__r.Line_Item_Category__c}" rendered="{!!item.IsEdit || item.isExist || item.Item.Line_Item__c != null}"/>
+                                                <apex:selectList value="{!item.Item.Line_Item_Type__c}" size="1" rendered="{!Item.IsEdit && !item.isExist && item.Item.Line_Item__c == null}">
+                                                    <apex:selectOptions value="{!DMLineItemTypeOptionMap[block.Disclosure.Id]}" /> 
+                                                </apex:selectList>
+                                            </apex:column>
+                                            <apex:repeat var="f" value="{!MapLineItemFieldSets['Reconciled_Donations_Made'].Fields}">
+                                                <apex:column >
+                                                    <apex:facet name="header">
+                                                        <apex:outputPanel >
+                                                            <apex:commandLink value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortBy != f.fieldPath,'',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortDirection == 'ASC', '▲', '▼'))}{!f.label}" action="{!btnSort_Click}" status="overlayStatus" rerender="myForm">
+                                                                <apex:param name="blockType" value="Donations Made"/>
+                                                                <apex:param name="stakeholderId" value="{!stake.stakeHolder.Id}"/>
+                                                                <apex:param name="doID" value="{!block.Disclosure.Id}" />
+                                                                <apex:param name="sortBy" value="{!f.fieldPath}"/>
+                                                                <apex:param name="sortDirection" value="{!if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortBy != f.fieldPath,'ASC',if(MapSortInfo[block.Disclosure.Id+'_'+stake.stakeHolder.Id +'Donations Made'].SortDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                                            </apex:commandLink>
+                                                            <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields[f.fieldPath].InlineHelpText != null}">
+                                                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields[f.fieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                                            </apex:outputText>
+                                                        </apex:outputPanel>
+                                                    </apex:facet>
+                                                    <apex:outputField value="{!item.Item[f.fieldPath]}" rendered="{!!item.IsEdit}"/>                     
+                                                    <apex:inputField value="{!item.Item[f.fieldPath]}" rendered="{!item.IsEdit}"/>
+                                                </apex:column>
+                                            </apex:repeat>
+                                            <apex:column >
+                                                <apex:facet name="header">Reconcile Status</apex:facet>
+                                                <apex:outputText rendered="{!item.IsReconciled}">
+                                                    <a id="status{!item.Item.Id}" style="text-decoration:underline;" href="javascript:void(0)"
+                                                    onmouseout="LookupHoverDetail.getHover('status{!item.Item.Id}').hide();" 
+                                                    onmouseover="LookupHoverDetail.getHover('status{!item.Item.Id}', '/apex/ViewReconcileHoverFrame?id={!item.Item.Id}&isdtp=vw').show();">
+                                                        Reconciled
+                                                    </a>
+                                                </apex:outputText>
+                                                <apex:outputText rendered="{!!item.IsReconciled}">Not Reconciled</apex:outputText>
+                                            </apex:column>
+                                        </apex:pageBlockTable>
+                                    </apex:pageBlockSection>
+                                </td>
+                            </tr>
+                        </table>
+                    </apex:pageBlock>
+                </apex:repeat>
+            </apex:pageBlock>
+            <br/>
+        </apex:repeat>
+        <apex:pageMessages escape="false"></apex:pageMessages>     
+    </apex:form>
+</apex:page>

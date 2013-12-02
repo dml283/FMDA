@@ -1,0 +1,67 @@
+<apex:page standardcontroller="Audit_Checklist__c" tabstyle="Audit_Checklist__c" extensions="AuditChecklistFormController">
+    <apex:form id="myForm">
+        
+    	<apex:sectionHeader title="Audit Checklist Template" subtitle="Edit Audit Checklist Template"/>
+        
+        <apex:pageMessages />
+        
+        <apex:pageBlock mode="Edit" title="Template Info">
+        	
+            <apex:pageBlockSection columns="1" title="General Info">
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Stakeholder Name" />
+                    <apex:outputField value="{!Entity.Disclosure_Claim_For_Payment__r.Stakeholder__c}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="File Number" />
+                    <apex:outputField value="{!Entity.Disclosure_Claim_For_Payment__r.TRIM_Record_Number__c}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Area / Ward (if applicable)" />
+                    <apex:outputField value="{!Entity.Disclosure_Claim_For_Payment__r.Disclosure_Obligation__r.Registration__r.Election_Event1__r.Electorate__c}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Party Affiliation" />
+                    <apex:outputField value="{!Entity.Disclosure_Claim_For_Payment__r.Disclosure_Obligation__r.Registration__r.Political_Party__c}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Review Period" />
+                    <apex:outputField value="{!Entity.Disclosure_Claim_For_Payment__r.Disclosure_Obligation__r.Lodgement_Due_Date__c}"/>
+                </apex:pageBlockSectionItem>
+                
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection columns="1" title="Audit Info">
+                
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__r.Initial_Audit_Officer__c}"/>
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__r.Initial_Audit_Date_Commenced__c}"/>
+                
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__r.Initial_Audit_Date_Completed__c}"/>
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__r.Initial_Audit_Comments_Recommendations__c}"/>
+                
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__r.Initial_Audit_Date_Approved__c}"/>
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__r.Initial_Audit_Approval_Comments__c}"/>
+                
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__r.Final_Audit_Date_Completed__c}"/>
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__r.Final_Audit_Comments_Recommendations__c}"/>
+                
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__r.Final_Audit_Date_Approved__c}"/>
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__r.Final_Audit_Approval_Comments__c}"/>
+                
+            </apex:pageBlockSection>
+            
+        </apex:pageBlock>
+        
+        <apex:pageBlock mode="Edit" title="Checklist">
+            
+            
+        
+        </apex:pageBlock>
+        
+    </apex:form>
+</apex:page>

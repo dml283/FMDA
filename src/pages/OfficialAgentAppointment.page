@@ -1,0 +1,393 @@
+<apex:page standardController="Official_Agent_Appointment__c" tabstyle="Official_Agent_Appointment__c"
+extensions="OfficialAgentAppointmentController">
+    <c:CommonScripts />
+    <script>
+    var stakeholderId = '{!$CurrentPage.Parameters.regaid}';
+    $(function(){
+        sforce.connection.sessionId = '{!GETSESSIONID()}';
+        onAjaxStop();
+		
+    });
+    
+    function onCancel(){
+        if(!validateActiveExists()){
+            alert( "You must denote 1 'Active' Official Agent against the Registration.  Please appoint an 'Active' Official Agent.");
+            return false;
+        }
+        return true;
+    };
+    function onAjaxStop(){
+    	$('input.f-Official_Agent__c').prop('disabled','true');
+        $('a.f-Official_Agent__c').unbind('click');
+        $('a.f-Official_Agent__c').click(function(e){
+            openCustomLookup('PersonSearch', this); e.preventDefault(); return false;
+        });
+    }
+    
+    function validateOaa(status, dateFrom, officialAgentId, oaaId){
+        var condition1 = status == 'Active';
+        var condition2 = dateFrom != '';        
+        //var condition3 = sforce.connection.query("SELECT Id FROM Account WHERE Id = '"+officialAgentId+"' AND Online_Training_Status__c LIKE '%Training Complete%'").getArray("records").length > 0;
+        
+        var condition4 = sforce.connection.query("SELECT Id FROM Official_Agent_Appointment__c WHERE Registration__c = '{!Entity.Registration__c}' AND Id != '"+oaaId+"' AND Status__c = 'Active'").getArray("records").length > 0;
+            
+        if(condition1 && condition2 /*&& condition3*/ && condition4){
+            if(confirm("{!Labels['OfficialAgentApp.Msg.1ActiveAgent_1'].Content__c}")){
+                $('.hdnIsByPassing1ActiveAgent').val('true');
+                return true;
+            }
+            else{
+                return false;
+            }
+        }
+        else{
+            return true; 
+        }
+    }
+    function validateMainSection(){        
+        var officialAgent = $('input.f-Official_Agent__c').parents('div.requiredInput').children().length == 0 ? $('input.f-Official_Agent__c') : $('input.f-Official_Agent__c').parents('div.requiredInput').children().eq(1);
+        return  validateOaa($('select.f-Status__c').val()
+                           , $('input.f-Date_From__c').val()
+                           , officialAgent.val()
+                           , $('#hdn-entity-id').val());
+    }
+    
+    function validateActiveExists(){
+        return sforce.connection.query("SELECT Id FROM Official_Agent_Appointment__c WHERE Registration__c = '{!Entity.Registration__c}' AND (Official_Agent__r.Online_Training_Status__c LIKE 'Training Complete' OR Date_From__c = null OR Status__c = 'Active')").getArray("records").length > 0;
+    }
+    
+    function openOnlineTrainingValidation(fadmsId) {
+        if (fadmsId == null || fadmsId=='') {
+            alert('Current user does not have a FADMS Id');
+            return;
+        }
+        var url = '/apex/OnlineTrainingValidation?isdtp=vw&fadmsId=' + fadmsId;
+        window.open(url, '_blank' , 'width=800,height=600,scrollbars=1,center=1');
+    }
+    
+    function reloadOnlineTrainingSection() {
+        officialAgentValidated();
+    }
+    
+    //HanhLuu:US5151:Start
+    function AgentStatusChange(){
+    	if($('select.f-Status__c').val().indexOf('Pending') != -1){ 
+	    	$('input.f-Date_From__c').attr("value",'');
+	    	$('input.f-Date_From__c').attr("disabled",true);
+	    	
+	    	$('input.f-Date_To__c').attr("value",'');
+	    	$('input.f-Date_To__c').attr("disabled",true);
+    	}
+    	else{
+	    	$('input.f-Date_From__c').attr("disabled",false);
+	    	$('input.f-Date_To__c').attr("disabled",false);    	
+    	}
+    	
+    	//alert('AgentStatusChange');
+    }
+    
+    function InlineAgentStatusChange(){
+    	if($('select.inlinef-Status__c').val().indexOf('Pending') != -1){ 
+	    	$('input.inlinef-Date_From__c').attr("value",'');
+	    	$('input.inlinef-Date_From__c').attr("disabled",true);
+	    	
+	    	$('input.inlinef-Date_To__c').attr("value",'');
+	    	$('input.inlinef-Date_To__c').attr("disabled",true);
+    	}
+    	else{
+	    	$('input.inlinef-Date_From__c').attr("disabled",false);
+	    	$('input.inlinef-Date_To__c').attr("disabled",false);    	
+    	}    	
+    }
+    //HanhLuu:US5151:End
+    </script>
+    <style>
+		.nowrap *{white-space:nowrap;}    
+    </style>
+    <apex:form id="myForm">
+        <script>
+        	$(function(){{!StartUpScript}})
+        </script>
+        <input id="hdn-entity-id" type="hidden" value="{!Entity.Id}" />
+        <c:Overlay />
+        <apex:sectionHeader title="Official Agent Appointment" subtitle="Edit Appointment" id="header"/>
+        
+        <apex:outputPanel id="pnl-pagemessages">
+            <apex:pageMessages ></apex:pageMessages>
+            <input type="hidden" class="hdnIsByPassing1ActiveAgent" name="hdnIsByPassing1ActiveAgent" value="false"/>
+        </apex:outputPanel>
+        <apex:pageBlock title="Official Agent Appointments" mode="edit" >
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Create New" action="{!btnCreateOap_Click}" immediate="true" rendered="{!ListEntity.Size > 0}" status="overlayStatus" rerender="myForm"/>
+                <apex:commandButton value="Quick Save" action="{!btnQuickSave_Click}" onclick="if(!validateMainSection()) return false;" status="overlayStatus" rerender="myForm"/>                
+                <apex:commandButton value="Save" action="{!btnSave_Click}" onclick="if(!validateMainSection()) return false;" status="overlayStatus" rerender="myForm"/>
+                <apex:commandButton value="Cancel" onclick="if('{!$CurrentPage.Parameters.isdtp}' == 'vw'){top.window.close()}else{top.window.location.href='/{!Entity.Registration__c}'}; return false;" immediate="true"/>
+            </apex:pageBlockButtons>
+            <!-- Information -->
+            <apex:pageBlockSection title="Information" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['OfficialAgentApp.Information'].Content__c}</apex:outputPanel>
+            </apex:pageBlockSection>
+            <!-- End Information -->
+            
+            <!-- Registration details -->
+            <apex:pageBlockSection title="Stakeholder Details" columns="2">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel styleclass="nowrap">Candidate/Head Candidate/Elected Member</apex:outputLabel>
+                    <apex:outputField value="{!Registration.Stakeholder__c}"/>
+                </apex:pageBlockSectionItem>
+                <apex:outputField value="{!Registration.RecordTypeId}" styleclass="nowrap"/>
+                <apex:pageBlockSectionItem dataStyle="white-space:nowrap">
+                    <apex:outputLabel styleclass="nowrap">Election Event</apex:outputLabel>
+                    <apex:outputField value="{!Registration.Election_Event1__c}"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <!-- End Registration details -->
+            
+            <!-- Official Agent Details -->
+            <apex:pageBlockSection title="Official Agent Details" columns="2">
+                <apex:outputField value="{!Entity.Name}"/> 
+                <!--<apex:inputField value="{!Entity.Status__c}" required="true" styleclass="f-Status__c" />-->
+               	<apex:inputField value="{!Entity.Status__c}" styleclass="f-Status__c" required="true" onchange="AgentStatusChange();"/>   
+                <apex:inputField value="{!Entity.Date_From__c}" styleclass="f-Date_From__c" />	
+                <apex:inputField value="{!Entity.Date_To__c}" styleclass="f-Date_To__c"  />		
+                <!--
+                <apex:inputField value="{!Entity.Date_From__c}" styleclass="f-Date_From__c" rendered="{!Entity.Status__c != null && !CONTAINS(Entity.Status__c, 'Pending')}"/>	
+                <apex:inputField value="{!Entity.Date_To__c}" styleclass="f-Date_To__c"  rendered="{!Entity.Status__c != null && !CONTAINS(Entity.Status__c, 'Pending')}"/>		
+                <apex:outputField value="{!Entity.Date_From__c}" styleclass="f-Date_From__c" rendered="{!Entity.Status__c != null && CONTAINS(Entity.Status__c, 'Pending')}"/>	
+                <apex:outputField value="{!Entity.Date_To__c}" rendered="{!Entity.Status__c != null && CONTAINS(Entity.Status__c, 'Pending')}"/>
+                 -->
+            </apex:pageBlockSection>	
+            <apex:pageBlockSection showHeader="false" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['OfficialAgentApp.OfficialAgent'].Content__c}</apex:outputPanel>				
+            </apex:pageBlockSection>
+                    
+            <apex:actionRegion >
+                <apex:pageBlockSection showHeader="false"  columns="1">
+                    <apex:outputPanel rendered="{!Entity.Id == null}" id="pbOap">
+                        <table style="width:100%; text-align:right; ">
+                            <tr>     
+                                <td class="labelCol">Offical Agent</td>
+                                <td class="dataCol">                                 
+                                    <apex:outputText rendered="{!$ObjectType.Official_Agent_Appointment__c.Fields.Official_Agent__c.InlineHelpText != null}">
+                                        <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Official_Agent_Appointment__c.Fields.Official_Agent__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                    </apex:outputText>
+                                    <apex:inputField value="{!Entity.Official_Agent__c}" styleclass="f-Official_Agent__c" id="officialAgent" 
+                                    onchange="officialAgentChange()" rendered="{!NOT(IsOfficialAct)}"/>
+                                    <apex:outputField value="{!Entity.Official_Agent__c}" rendered="{!(IsOfficialAct)}" style="width:100%;"/>
+                                    <apex:actionFunction name="officialAgentChange" action="{!lkpOfficialAgent_Change}" status="overlayStatus" rerender="myForm"/>
+                                    <apex:actionFunction name="officialAgentValidated" action="{!OfficialAgent_Validated}" status="overlayStatus" rerender="myForm"/>
+                                </td>                                
+                                <td class="labelCol">FADMS Elector ID
+                                    <apex:outputText rendered="{!$ObjectType.Account.Fields.FADMS_Elector_ID__c.InlineHelpText != null}">
+                                        <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Account.Fields.FADMS_Elector_ID__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                    </apex:outputText>
+                                </td>
+                                <td class="dataCol"><apex:outputField value="{!OfficialAgent.FADMS_Elector_ID__c}"/></td>
+                            </tr>   
+                            <tr>
+                                <td class="labelCol"><apex:outputText value="Stakeholder acting as own Official Agent" rendered="{!IsStakeholderAct}"/></td>
+                                <td class="dataCol">
+                                    <apex:actionRegion >
+                                        <apex:actionFunction name="updateOfficialAgent" action="{!updateOfficialAgent}" rerender="pbOap,pbs-otd" status="overlayStatus"/>        
+                                        <apex:inputCheckbox value="{!IsStakeholder}" styleclass="ckb-agenttype ckb-agenttype-stakeholder"
+                                        onclick="updateOfficialAgent();" rendered="{!IsStakeholderAct}"/>
+                                    </apex:actionRegion>
+                                </td>
+                                
+                                <td class="labelCol"><apex:outputText value="Head Candidate acting as own Official Agent" rendered="{!IsHeadCandidateAct}"/></td>
+                                <td class="dataCol">
+                                    <apex:actionRegion >
+                                        <apex:actionFunction name="updateOfficialAgent1" action="{!updateOfficialAgent}" rerender="pbOap,pbs-otd" status="overlayStatus"/>
+                                        <apex:inputCheckbox value="{!IsHeadCandidate}" styleclass="ckb-agenttype ckb-agenttype-headcandidate"
+                                        onclick="updateOfficialAgent1();" rendered="{!IsHeadCandidateAct}"/>
+                                    </apex:actionRegion>
+                                </td>
+                            </tr>     
+                            <tr>
+                                <td class="labelCol"><apex:outputText value="Party Agent acting as own Official Agent" rendered="{!IsPartyAgentAct}"/></td>
+                                <td class="dataCol">
+                                    <apex:actionRegion >
+                                        <apex:actionFunction name="updateOfficialAgent2" action="{!updateOfficialAgent}" rerender="pbOap,pbs-otd" status="overlayStatus"/>
+                                        <apex:inputCheckbox value="{!IsPartyAgent}" styleclass="ckb-agenttype ckb-agenttype-partyagent"
+                                        onclick="updateOfficialAgent2();" rendered="{!IsPartyAgentAct}"/>
+                                    </apex:actionRegion>
+                                </td>
+                            </tr>
+                        </table>                        
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!Entity.Id != null}" >
+                        <apex:inputField value="{!Entity.Official_Agent__c}" />
+                        <input type="hidden" value="{!Entity.Official_Agent__c}" class="f-Official_Agent__c" />
+                    </apex:outputPanel>
+                </apex:pageBlockSection>
+                <apex:pageBlockSection showHeader="false" columns="1">
+                    <apex:outputPanel styleClass="helptext">{!Labels['OfficialAgentApp.NoticeForm'].Content__c}</apex:outputPanel>
+                </apex:pageBlockSection>
+                <apex:pageBlockSection showHeader="false" columns="2">
+                    <apex:inputField value="{!Entity.Confirm_Signed_By_Official_Agent__c}" />
+                    <apex:inputField value="{!Entity.Date_Signed_By_Official_Agent__c}" />
+                    <apex:inputField value="{!Entity.Confirm_Signed_By_Stakeholder__c}" />
+                    <apex:inputField value="{!Entity.Date_Signed_By_Stakeholder__c}" />
+                    <apex:inputField value="{!Entity.Confirm_Signed_By_Party_Agent__c}" />                    
+					<apex:inputField value="{!Entity.Date_Signed_By_Party_Agent__c}" />
+                    
+                    <apex:inputField value="{!Entity.Received_By__c}" />                    
+                    <apex:inputField value="{!Entity.Date_Received__c}" />
+                </apex:pageBlockSection>
+                <!-- End Official Agent Dtails -->
+                
+                <!-- Online Training Details -->
+                <apex:pageBlockSection title="Online Training Details"></apex:pageBlockSection>	
+                <apex:pageBlockSection showHeader="false" columns="1">
+                    <apex:outputPanel styleClass="helptext">{!Labels['OfficialAgentApp.OnlineTraining'].Content__c}</apex:outputPanel>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection showHeader="false" columns="1">
+                    <apex:outputPanel >
+                        <div style="margin-left:40%;" >
+                            <apex:commandButton value="Validate Online Training" onClick="openOnlineTrainingValidation('{!OfficialAgent.FADMS_Elector_ID__c}');return false;"/>
+                        </div>
+                    </apex:outputPanel>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection showHeader="false" columns="2" id="pbs-otd">
+                    <!--
+                    <apex:outputPanel rendered="{!Entity.Id == null}">
+                        <table>
+                            <tr>
+                               <td class="labelCol"> Training Status </td>
+                               <td class="dataCol"><apex:outputField value="{!OfficialAgent.Training_Status__c}" /></td>
+                               <td class="labelCol"> Training Status </td>
+                               <td class="dataCol"><apex:outputField value="{!OfficialAgent.Training_Status__c}" /></td>
+                               <td class="labelCol"> Training Status </td>
+                               <td class="dataCol"><apex:outputField value="{!OfficialAgent.Training_Status__c}" /></td>
+                            </tr>    
+                        </table>
+                    </apex:outputPanel>
+                    -->
+                    <apex:outputField value="{!OfficialAgent.Training_Status__c}" />
+                    <apex:outputField value="{!OfficialAgent.Online_Training_Status__c}" />
+                    <apex:outputField value="{!OfficialAgent.Online_Training_Attempt_Count__c}" />
+                    <apex:inputField value="{!OfficialAgent.CPA_Membership_Number__c}" />
+                    <apex:inputField value="{!OfficialAgent.ICAA_Membership_Number__c}" />
+                    <apex:inputField value="{!OfficialAgent.IPA_Membership_Number__c}" />
+                </apex:pageBlockSection>
+            </apex:actionRegion>
+            <!-- End Online Training Details -->
+        </apex:pageBlock>
+        <apex:actionRegion >
+            
+            <apex:pageMessages ></apex:pageMessages>
+            <apex:pageBlock title="Official Agent Appointments" id="pb-oaps" mode="edit">
+                <apex:pageBlockTable value="{!ListEntity}" var="item">
+                    <apex:column >
+                        <apex:facet name="header"></apex:facet>
+                        	<apex:outputPanel rendered="{!item.Id != entity.Id}">
+                            <apex:outputPanel rendered="{!item.Id == InlineEntityId}">
+                                <apex:commandLink value="Save" action="{!btnSaveInlineEditOap_Click}" status="overlayStatus" rerender="pb-oaps,pnl-pagemessages"
+                                onclick="if(!validateOaa($('.inlinef-Status__c').val(), $('.inlinef-Date_From__c').val(), '{!item.Official_Agent__c}', '{!item.Id}')) {return false;};"></apex:commandLink>
+                                |&nbsp;
+                                <apex:commandLink value="Cancel" action="{!btnCancelInlineEditOap_Click}" status="overlayStatus" rerender="pb-oaps,pnl-pagemessages">
+                                    <apex:param name="oapId" value="{!item.Id}" />
+                                </apex:commandLink>
+                            </apex:outputPanel>
+                            
+                            <apex:outputPanel rendered="{!item.Id != InlineEntityId}">  
+                                <apex:commandLink value="Edit" action="{!btnInlineEditOap_Click}" status="overlayStatus" rerender="pb-oaps,pnl-pagemessages" oncomplete="InlineAgentStatusChange();">
+                                    <apex:param name="oapId" value="{!item.Id}" />
+                                </apex:commandLink><!--
+                                |&nbsp;
+                                --><apex:commandLink value="Del" action="{!btnDelOap_Click}" onclick="if(!confirm('Are you sure you want to delete the record?')) return false;" rendered="false" status="overlayStatus" rerender="pb-oaps,pnl-pagemessages">
+                                    <apex:param name="oapId" value="{!item.Id}" />
+                                </apex:commandLink>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                        	<apex:outputPanel >
+                            <apex:commandLink value="Official Agent Appointment Number {!IF(ListEntitySortColumn == 'Name', IF(ListEntitySortDirection == null, '', IF(ListEntitySortDirection == 'ASC', '▲', '▼')), '')}" action="{!btnSortOap_Click}" status="overlayStatus" rerender="pb-oaps,pnl-pagemessages">
+                                <apex:param name="ListEntitySortColumn" value="Name" />
+                            </apex:commandLink>
+                            <apex:outputText rendered="{!$ObjectType.Official_Agent_Appointment__c.Fields.Name.InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Official_Agent_Appointment__c.Fields.Name.InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:commandLink value="{!item.Name}" action="{!btnEditOap_Click}" rerender="myForm" status="overlayStatus">
+                            <apex:param name="oapId" value="{!item.Id}" />
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                        	<apex:outputPanel >
+                            <apex:commandLink value="Official Agent {!IF(ListEntitySortColumn == 'Official_Agent__r.Name', IF(ListEntitySortDirection == null, '', IF(ListEntitySortDirection == 'ASC', '▲', '▼')), '')}" action="{!btnSortOap_Click}" status="overlayStatus" rerender="pb-oaps,pnl-pagemessages">
+                                <apex:param name="ListEntitySortColumn" value="Official_Agent__r.Name" />
+                            </apex:commandLink>
+                            <apex:outputText rendered="{!$ObjectType.Official_Agent_Appointment__c.Fields.Official_Agent__c.InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Official_Agent_Appointment__c.Fields.Official_Agent__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:outputField value="{!item.Official_Agent__c}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                        	<apex:outputPanel >
+                            <apex:commandLink value="Status {!IF(ListEntitySortColumn == 'Status__c', IF(ListEntitySortDirection == null, '', IF(ListEntitySortDirection == 'ASC', '▲', '▼')), '')}" action="{!btnSortOap_Click}" status="overlayStatus" rerender="pb-oaps,pnl-pagemessages">
+                                <apex:param name="ListEntitySortColumn" value="Status__c" />
+                            </apex:commandLink>
+                            <apex:outputText rendered="{!$ObjectType.Official_Agent_Appointment__c.Fields.Status__c.InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Official_Agent_Appointment__c.Fields.Status__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:inputField value="{!item.Status__c}" rendered="{!item.Id == InlineEntityId}" styleclass="inlinef-Status__c" onchange="InlineAgentStatusChange();"/>
+                        <apex:outputField value="{!item.Status__c}" rendered="{!item.Id != InlineEntityId}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                        	<apex:outputPanel >
+                            <apex:commandLink value="Training Status {!IF(ListEntitySortColumn == 'Official_Agent__r.Training_Status__c', IF(ListEntitySortDirection == null, '', IF(ListEntitySortDirection == 'ASC', '▲', '▼')), '')}" action="{!btnSortOap_Click}" status="overlayStatus" rerender="pb-oaps,pnl-pagemessages">
+                                <apex:param name="ListEntitySortColumn" value="Official_Agent__r.Training_Status__c" />
+                            </apex:commandLink>
+                            <apex:outputText rendered="{!$ObjectType.Account.Fields.Training_Status__c.InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Account.Fields.Training_Status__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:outputField value="{!item.Official_Agent__r.Training_Status__c}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                        	<apex:outputPanel >
+                            <apex:commandLink value="Date From {!IF(ListEntitySortColumn == 'Date_From__c', IF(ListEntitySortDirection == null, '', IF(ListEntitySortDirection == 'ASC', '▲', '▼')), '')}" action="{!btnSortOap_Click}" status="overlayStatus" rerender="pb-oaps,pnl-pagemessages">
+                                <apex:param name="ListEntitySortColumn" value="Date_From__c" />
+                            </apex:commandLink>
+                            <apex:outputText rendered="{!$ObjectType.Official_Agent_Appointment__c.Fields.Date_From__c.InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Official_Agent_Appointment__c.Fields.Date_From__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:inputField value="{!item.Date_From__c}" rendered="{!item.Id == InlineEntityId}" styleclass="inlinef-Date_From__c"/>
+                        <apex:outputField value="{!item.Date_From__c}" rendered="{!item.Id != InlineEntityId}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                        	<apex:outputPanel >
+                            <apex:commandLink value="Date To {!IF(ListEntitySortColumn == 'Date_To__c', IF(ListEntitySortDirection == null, '', IF(ListEntitySortDirection == 'ASC', '▲', '▼')), '')}" action="{!btnSortOap_Click}" status="overlayStatus" rerender="pb-oaps,pnl-pagemessages">
+                                <apex:param name="ListEntitySortColumn" value="Date_To__c" />
+                            </apex:commandLink>
+                            <apex:outputText rendered="{!$ObjectType.Official_Agent_Appointment__c.Fields.Date_To__c.InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Official_Agent_Appointment__c.Fields.Date_To__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:inputField value="{!item.Date_To__c}" rendered="{!item.Id == InlineEntityId}" styleclass="inlinef-Date_To__c"/>
+                        <apex:outputField value="{!item.Date_To__c}" rendered="{!item.Id != InlineEntityId}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+        </apex:actionRegion>
+    </apex:form>
+</apex:page>

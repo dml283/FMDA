@@ -1,0 +1,46 @@
+<apex:page >
+	<c:CommonScripts />
+	<style>
+		html{display:none}
+	</style>
+	<script>
+		$(function(){
+            
+            // US4823
+            if('{!$CurrentPage.Parameters.isDonationReceived}' == '' || '{!$CurrentPage.Parameters.isDonationReceived}' == 'null' || '{!$CurrentPage.Parameters.isDonationReceived}' == 'undefined'){
+                $('#ddl-recordtype').append('<option value="/apex/politicalpartysearch">Political Party</option>');
+            }
+            
+			if('{!$CurrentPage.Parameters.CurrentId}' != '' && '{!$CurrentPage.Parameters.CurrentId}' != 'null' && '{!$CurrentPage.Parameters.CurrentId}' != 'undefined'){
+				var accounts = sforce.connection.query("SELECT RecordType.Name FROM Account WHERE Id = '{!$CurrentPage.Parameters.CurrentId}' LIMIT 1").getArray("records");
+				if(accounts.length > 0){
+					top.window.location.href = $('#ddl-recordtype option:contains(' + accounts[0].RecordType.Name + ')').val() + top.window.location.search;
+				}
+				return;
+			}
+
+			$('html').show();
+		})
+		function redirect(){
+			top.window.location.href = $('#ddl-recordtype').val() + top.window.location.search + '&redirected=1';
+		}
+	</script>
+	<apex:sectionheader title="Search Stakeholder" subtitle="Select Stakeholder Record Type" />
+	<apex:pageblock mode="maindetail">
+		<apex:pageblocksection >
+			<apex:pageblocksectionitem >
+				<apex:outputpanel >
+					Record Type to search on
+				</apex:outputpanel>
+				<apex:outputpanel >
+					<select id="ddl-recordtype">
+						<option value="/apex/entitysearch">Entity</option>
+						<option value="/apex/personsearch">Person</option>
+					</select>
+					<button onclick="redirect()">Continue</button>
+					<button onclick="top.window.close()">Cancel</button>
+				</apex:outputpanel>
+			</apex:pageblocksectionitem>
+		</apex:pageblocksection>
+	</apex:pageblock>
+</apex:page>

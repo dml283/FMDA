@@ -1,0 +1,31 @@
+<apex:page standardController="Audit_Checklist__c" tabStyle="Audit_Checklist__c" extensions="AuditChecklistTemplateSelectController" >
+    <apex:form >
+        <apex:sectionHeader title="Audit Checklist" subtitle="Create Audit Checklist"/>
+        <apex:pageBlock title="Select a Template">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Cancel" action="{!Cancel}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="1">
+                <apex:actionFunction action="{!fieldParentId_OnChange}" name="fieldParentId_OnChange"/>
+                <apex:inputField value="{!Entity.Disclosure_Claim_for_Payment__c}" onchange="fieldParentId_OnChange();"/>
+                <apex:pageBlockTable var="item" value="{!ListTemplate}">
+                    <apex:column style="width:100px;">
+                        <apex:outputLink value="/apex/auditchecklistform?id={!item.Id}&doID={!doID}">Create Checklist</apex:outputLink>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">Number</apex:facet>
+                        <apex:outputField value="{!item.Name}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">Name</apex:facet>
+                        <apex:outputField value="{!item.Template_Name__c}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">Description</apex:facet>
+                        <apex:outputText value="{!item.Template_Description__c}" escape="false"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

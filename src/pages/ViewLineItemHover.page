@@ -1,0 +1,12 @@
+<apex:page standardcontroller="Line_Item__c" extensions="ViewLineItemController">
+    <table class="detailList" border="0" cellpadding="0" cellspacing="0">
+        <tbody>
+            <apex:repeat value="{!$ObjectType.Line_Item__c.FieldSets['X' + Line_Item__c.Line_Item_Type__r.Line_Item_Category__r.Reference_Number__c]}" var="f">
+                <tr>
+                    <td class="labelCol">{!f.Label}</td>
+                    <td class="dataCol"><apex:outputField value="{!Entity[f]}" /></td>
+                </tr> 
+            </apex:repeat>
+        </tbody>
+    </table>
+</apex:page>

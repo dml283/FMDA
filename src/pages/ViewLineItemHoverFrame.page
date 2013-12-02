@@ -1,0 +1,30 @@
+<apex:page standardStylesheets="false" showheader="false" applyBodyTag="false" applyHtmlTag="false" > 
+    <script>
+    	$('#{!$CurrentPage.Parameters.Id}-ifr-content').load(function(){$('#{!$CurrentPage.Parameters.Id}-pnl-loading').hide()})
+    </script>
+    
+    <div class="Custom88Block">
+        <div class="bPageBlock brandSecondaryBrd secondaryPalette">
+            <div class="pbHeader brandSecondaryBrd">
+                <table border="0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr>
+                            <td class="pbTitle">
+                                <h2 class="mainTitle">Line Item</h2>
+                            </td>
+                            <td class="pbButton">&nbsp;</td>
+                        </tr>
+                    </tbody>
+                </table> 
+            </div>
+            <div class="pbBody">
+                <div id="{!$CurrentPage.Parameters.Id}-pnl-loading"><!--<img src='/img/loading.gif' alt=''/> Loading...--></div>
+                <iframe id='{!$CurrentPage.Parameters.Id}-ifr-content' src="/apex/viewlineitemhover?id={!$CurrentPage.Parameters.Id}&isdtp=vw" style="border:0px" width="100%" height="100%"/>
+                
+            </div>
+            <div class="pbFooter secondaryPalette">
+                <div class="bg"></div>
+            </div>
+        </div>
+    </div>
+</apex:page>

@@ -1,0 +1,45 @@
+<apex:page standardController="fuseit_s2t__Trim__c" extensions="fuseit_s2t.TrimSchedulerController" tabstyle="fuseit_s2t__Trim__c">
+<script type="text/javascript">
+
+function redirectBack() {
+    document.location.href="/{!trimId}"; 
+}
+
+</script>
+<apex:form >
+    <apex:sectionHeader title="Trim Document Synchronization" subtitle="Scheduler"/>
+
+         This scheduler allows all Trim Servers listed under the "Trim" Tab that have "Enable Scheduling" checkbox checked, to automatically have their Trim Records that require synchronization synchronized to their respective Trim Servers.
+         <p/>
+         <i>Check your Salesforce "Scheduled Jobs" (Setup -> Administration Setup -> Monitoring -> Scheduled Jobs -> "Trim Scheduler") for more information.</i>
+         <p/>
+        <apex:pageBlock title="Schedule">
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!saveSchedule}" value="Save / Reset"/>
+                <input type="button" value="Back" class="btn" onclick="redirectBack()"/>
+            </apex:pageBlockButtons>
+            
+            
+            <apex:pageBlockSection showHeader="false" columns="1">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="On this Minute each hour (0-59)" for="minute"/>
+                    <apex:inputText value="{!minute}" id="minute" maxlength="2" size="2" rendered="{!$ObjectType.fuseit_s2t__Trim__c.Updateable}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="On this Hour hour each day (0 - 23)" for="hour"/>
+                    <apex:inputText value="{!hour}" id="hour" maxlength="2" size="2" rendered="{!$ObjectType.fuseit_s2t__Trim__c.Updateable}"/>
+                </apex:pageBlockSectionItem>
+             </apex:pageBlockSection>
+             Example:
+             <ul>
+                <li>0 minutes &amp; 0 hours will terminate the Trim Schedule task.</li>
+                <li>5 minutes &amp; 0 hours will schedule synchronization 5 minutes past every hour each hour.</li>
+                <li>0 minutes &amp; 6 hours will schedule synchronization 6:00am each day.</li>
+                <li>5 minutes &amp; 20 hours will schedule synchronization 8:05pm each day.</li>
+             </ul>
+             
+             <apex:pageMessages />
+             
+        </apex:pageBlock>
+</apex:form>
+</apex:page>

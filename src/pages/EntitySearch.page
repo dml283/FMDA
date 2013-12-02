@@ -1,0 +1,179 @@
+<apex:page controller="EntitySearchController" showHeader="false" sideBar="false" title="Entity Search">
+	<style type="text/css">
+        .headerRow th{white-space:normal!important}
+    </style>
+    <body class="hasMotif lookupTab  LookupSearchFrame  brandNoBgrImg">
+        <div class="lookup">
+            <div class="bPageTitle">
+                <div class="ptBody secondaryPalette">
+                    <div class="content"><img title="" class="pageTitleIcon" alt="" src="/s.gif"/>
+                        <h1>Lookup</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="pBody">
+            </div>
+        </div>
+        <apex:form rendered="{!StartUpScript == null}" >
+            <apex:messages />
+            <c:Overlay ></c:Overlay>
+            <apex:pageBlock title="Stakeholder (Entity) FADMS Search" mode="edit">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="Search" action="{!Search}" />
+                    <apex:commandButton value="Create New" action="{!CreateStakeHolder}" />
+                    <apex:commandButton value="Cancel" onclick="top.window.close(); return false;" />
+                    <apex:commandButton value="Back" onclick="top.window.location.href='/apex/stakeholdersearchselect{!QueryString}'; return false;" rendered="{!$CurrentPage.Parameters.Redirected == '1'}"/>
+                </apex:pageBlockButtons>
+                
+                <apex:pageBlockSection title="Stakeholder Details" columns="2">
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Name.InlineHelpText}">
+                        <apex:outputLabel value="Name" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputText value="{!Account.Name}" required="false"/>
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['Name']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Phone.InlineHelpText}">
+                        <apex:outputLabel value="Phone" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.Phone}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['Phone']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ABN_ACN_Other__c.InlineHelpText}">
+                        <apex:outputLabel value="ABN/ACN/Other" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.ABN_ACN_Other__c}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['ABN_ACN_Other__c']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Fax.InlineHelpText}">
+                        <apex:outputLabel value="Fax" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.Fax}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['Fax']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="Official Address Details" columns="2">
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.BillingStreet.InlineHelpText}">
+                        <apex:outputLabel value="Street" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.BillingStreet}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['BillingStreet']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.BillingCity.InlineHelpText}">
+                        <apex:outputLabel value="City" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.BillingCity}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['BillingCity']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.BillingState.InlineHelpText}">
+                        <apex:outputLabel value="State" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.BillingState}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['BillingState']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.BillingPostalCode.InlineHelpText}">
+                        <apex:outputLabel value="Post Code" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.BillingPostalCode}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['BillingPostalCode']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.BillingCountry.InlineHelpText}">
+                        <apex:outputLabel value="Country" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.BillingCountry}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection columns="2" id="pbs-postal-address-details">
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                            <span class="pbSubExtra"><apex:commandButton value="Copy from Official Address" action="{!CopyFromOfficialAddress}" status="overlayStatus" rerender="pbs-postal-address-details" style="float:right"/></span>
+                            <h3>Postal Address Details</h3>
+                        </apex:outputPanel>
+                    </apex:facet>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingStreet.InlineHelpText}">
+                        <apex:outputLabel value="Street" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.ShippingStreet}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['BillingStreet']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingCity.InlineHelpText}">
+                        <apex:outputLabel value="City" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.ShippingCity}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['BillingCity']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingState.InlineHelpText}">
+                        <apex:outputLabel value="State" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.ShippingState}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['BillingState']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingPostalCode.InlineHelpText}">
+                        <apex:outputLabel value="Post Code" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.ShippingPostalCode}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['BillingPostalCode']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingCountry.InlineHelpText}">
+                        <apex:outputLabel value="Country" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Account.ShippingCountry}" />
+                            <!--<apex:inputCheckbox value="{!CriteriaSelection['BillingPostalCode']}" />-->
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="Search Results">
+                    <apex:outputPanel rendered="{!NoMatches}">
+                        <p>
+                            No records found due to one of the following:
+                            <ul>
+                                <li>There are no records of this type</li>
+                                <li>You don't have permission to see any of the records</li>
+                            </ul>
+                        </p>
+                    </apex:outputPanel>
+                </apex:pageBlockSection>
+                <apex:outputPanel rendered="{!!NoMatches}" id="pnl-results">
+                    <apex:pageBlockTable value="{!Accounts}" var="item" >
+                    	<apex:repeat var="f" value="{!$ObjectType.Account.FieldSets.Entity}">
+	                        <apex:column >
+	                            <apex:facet name="header">
+                                    <apex:outputPanel >
+                                        <apex:commandLink value="{!f.Label} {!IF(SortExpressions[f.FieldPath] == 'null', '', IF(SortExpressions[f.FieldPath] == 'ASC', '▲', '▼'))}" action="{!Sort}" >
+                                            <apex:param name="AccountSortingInfo" value="{!f.FieldPath}" />
+                                        </apex:commandLink>
+                                        <apex:outputText rendered="{!$ObjectType.Account.Fields[f.FieldPath].InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Account.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </apex:outputPanel>
+	                            </apex:facet>
+	                            <apex:commandLink value="{!item[f.FieldPath]}" action="{!UpdateStakeHolder}" rendered="{!f.FieldPath == 'Name'}" > 
+	                                <apex:param name="accountIdToUpdate" value="{!item.Id}" />
+	                            </apex:commandLink>
+                                <apex:outputField value="{!item[f.FieldPath]}" rendered="{!f.FieldPath != 'Name'}" />
+	                        </apex:column>
+                        </apex:repeat>
+                    </apex:pageBlockTable>
+                    <p>
+                        <c:Pagination pager="{!AccountPagingInfo}" action="{!Search}" rerender="pnl-results" status="overlayStatus"/>
+                    </p>
+                </apex:outputPanel>
+            </apex:pageBlock>
+        </apex:form>
+    </body>
+</apex:page>

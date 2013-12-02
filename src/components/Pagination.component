@@ -1,0 +1,29 @@
+<apex:component >
+    <apex:attribute name="Pager" description="PagingInfo object that handles paging"  type="PagingInfo" required="required"/>
+    <apex:attribute name="Action" description="Action on the target page that will invoke paging" type="ApexPages.Action" required="required"/>
+    <apex:attribute name="Rerender" description="For use with ajax" type="Object"/>
+    <apex:attribute name="Status" description="For use with ajax" type="String"/>
+
+	<apex:outputPanel layout="block" styleClass="pSearchShowMore" id="otpNav2" rendered="{!Pager.TotalCount != null}">  
+        Total Records: <apex:outputText rendered="{!IF(Pager.TotalCount==10000,true,false)}">10000 +</apex:outputText><apex:outputText rendered="{!IF(Pager.TotalCount < 10000,true,false)}">{!Pager.TotalCount}</apex:outputText>  
+        <apex:image url="/img/search_prevarrow_disabled.gif" styleClass="prevArrow" rendered="{!NOT(Pager.HasPrevious)}"/>  
+        <apex:image url="/img/search_prevarrow.gif" title="Previous Page" styleClass="prevArrow" rendered="{!Pager.HasPrevious}"/>  
+        
+        <apex:commandLink action="{!Action}" title="Previous Page" value="Previous Page" rendered="{!Pager.HasPrevious}" reRender="{!Rerender}" status="{!Status}">
+            <apex:param name="{!(Pager.ListName + '.PageIndex')}" value="{!(Pager.PageIndex - 1)}"/>
+        </apex:commandLink>
+        <apex:outputPanel styleClass="pShowLess noLink" style="color:grey" rendered="{!NOT(Pager.HasPrevious)}">Previous Page</apex:outputPanel>           
+        
+        <apex:outputPanel rendered="{!Pager.TotalCount>0}"> &nbsp;({!IF(Pager.PageIndex == 1,1,((Pager.PageIndex -1) * Pager.PageSize)+1)}-{!IF(Pager.PageIndex == 1, Pager.CurrentPageSize,((Pager.PageIndex -1) * Pager.PageSize) +  Pager.CurrentPageSize)})&nbsp;  </apex:outputPanel>
+        <apex:outputPanel rendered="{!Pager.TotalCount==0}"> &nbsp;(0 - 0)&nbsp;  </apex:outputPanel>
+        
+        <apex:outputPanel styleClass="pShowLess noLink" style="color:grey" rendered="{!NOT(Pager.HasNext)}">Next Page</apex:outputPanel>           
+        <apex:commandLink title="Next Page" value="Next Page" rendered="{!Pager.HasNext}" action="{!Action}" reRender="{!Rerender}" status="{!Status}">
+            <apex:param name="{!(Pager.ListName + '.PageIndex')}" value="{!(Pager.PageIndex + 1)}"/>
+        </apex:commandLink>&nbsp;  
+        
+        <apex:image url="/img/search_nextarrow.gif" title="Next Page" styleClass="nextArrow" rendered="{!Pager.HasNext}"/>  
+        <apex:image url="/img/search_nextarrow_disabled.gif" rendered="{!NOT(Pager.HasNext)}"/>     
+    </apex:outputPanel>
+    
+</apex:component>

@@ -1,0 +1,37 @@
+<apex:page standardController="Line_Item__c" extensions="PopupReconciledLineItemInfoController">
+    <apex:outputPanel id="pnlPageMessages">    
+        <apex:pageMessages escape="false" />
+    </apex:outputPanel>
+    <div style="width:330px;height:250px;overflow:auto;">
+        <apex:form >
+            <apex:pageBlock mode="maindetail">
+                <apex:pageBlockTable var="lineItem" value="{!ListLI}">
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                Line Item
+                                <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields.Name.InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields.Name.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:commandLink value="{!lineItem.Name}"></apex:commandLink>
+                    </apex:column>
+                    <apex:repeat var="f" value="{!$ObjectType.Line_Item__c.FieldSets['X' + Line_Item__c.Line_Item_Type__r.Line_Item_Category__r.Reference_Number__c]}">
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputPanel >
+                                    {!f.Label}
+                                    <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                        <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                    </apex:outputText>
+                                </apex:outputPanel>
+                            </apex:facet>
+                            <apex:outputField value="{!lineItem[f]}"/>
+                        </apex:column>
+                    </apex:repeat>
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+        </apex:form>
+    </div>
+</apex:page>

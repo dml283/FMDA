@@ -1,0 +1,100 @@
+<apex:page showHeader="true" controller="fuseit_s2t.TrimNewLinkedRecordController" tabstyle="Trim_Records__tab">
+<apex:form >
+<script type="text/javascript">
+
+//Open new window to search for TRIM Container URIs from TRIM Server
+function openContainerSearch() {
+
+    var inputObj = document.getElementById("{!$Component.trimBlock.details.locUri}");
+
+    var containerWindow = window.open('{!URLFOR($Page.fuseit_s2t__TrimContainerLookUp)}?trimId={!selectedRecord.fuseit_s2t__Trim_ID__c}&uri=' + inputObj.value, 'ContainerLookUp', 'width=720,height=380,location=no,dependent=no,resizable=yes,toolbar=no,status=no,directories=no,menubar=no,scrollbars=yes',false);
+    containerWindow.focus();
+}
+
+//Set the Container URI from the open window
+function setContainerValue(newVal) {
+    var inputObj = document.getElementById("{!$Component.trimBlock.details.locUri}");
+    inputObj.value = newVal;
+    inputObj.focus();
+}
+
+//Open a window to search for TRIM Records from TRIM Server
+function openRecordsSearch() {
+
+    var inputObj = document.getElementById("{!$Component.trimBlock.details.locUri}");
+
+    var containerWindow = window.open('{!URLFOR($Page.fuseit_s2t__TrimServerRecordLookUp)}?trimId={!selectedRecord.fuseit_s2t__Trim_ID__c}&uri=' + inputObj.value, 'RecordsLookUp', 'width=720,height=380,location=no,dependent=no,resizable=yes,toolbar=no,status=no,directories=no,menubar=no,scrollbars=yes',false);
+    containerWindow.focus();
+}
+
+//Set the selected Record values from the open window
+function setRecordValue(title, ext, uri, containerUri, recNumber) {
+    
+    //TODO sort out Doc Type as well.
+    
+    alert('uri=' + uri);
+    alert('containerUri='+containerUri);
+    
+    var inputTitle = document.getElementById("{!$Component.trimBlock.details.recTitle}");
+    inputTitle.value = title;
+    
+    var inputExt = document.getElementById("{!$Component.trimBlock.details.recExt}");
+    if(ext.indexOf('.') < 0) ext = "." + ext;
+    inputExt.value = ext;
+    
+    //The Records actual Uri
+    var inputUri = document.getElementById("{!$Component.trimBlock.details.recUri}");
+    inputUri.value = uri;
+    
+    //The Records actual Uri
+    var inputNumber = document.getElementById("{!$Component.trimBlock.details.recNumber}");
+    inputNumber.value = recNumber;
+    
+    //The Records Container Uri
+    var inputLoc = document.getElementById("{!$Component.trimBlock.details.locUri}");
+    inputLoc.value = containerUri;
+    inputLoc.focus();
+}
+
+
+</script>
+<apex:outputPanel id="trimTable"> 
+
+    <apex:sectionHeader title="Trim Document linked to TRIM Record" subtitle="{!selectedRecord.Name}"/>
+        <apex:pageBlock title="Linked Record Details" id="trimBlock">
+        
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!save}" value="Save" title="Save the new Linked Trim Record"/>
+                <apex:commandButton action="{!redirectBack}" value="Back" immediate="true" title="Return to the previous page"/>
+                <input type="button" class="btn" onclick="openRecordsSearch();return false;" value="Record Search" title="Search TRIM Server for an existing Record to link." />
+                <input type="button" class="btn" onclick="openContainerSearch();return false;" value="Container Search" title="Search TRIM Server to change Container" style="display:none;"/>
+            </apex:pageBlockButtons>
+             
+            <apex:pageBlockSection title="Details" columns="2" id="details">
+                <apex:inputField value="{!selectedRecord.Name}" required="true" id="recTitle"/>
+                <apex:outputField value="{!selectedRecord.fuseit_s2t__Trim_Status__c}"/>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_Location_ID__c}" id="locUri"/>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__File_Extension__c}" required="true" id="recExt"/>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_ID__c}" required="true"/>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_Record_Type__c}" id="trimRecordType" required="true"/>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Related Object ID"/>
+                    <apex:outputLink value="/{!selectedRecord.fuseit_s2t__Parent_ID__c}">{!selectedRecord.fuseit_s2t__Parent_ID__c}</apex:outputLink>
+                </apex:pageBlockSectionItem>
+                <apex:outputField value="{!selectedRecord.fuseit_s2t__isPreserve__c}" id="chkPreserve"/>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Trim Record Comment" for="comment"/>
+                    <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_Comment__c}" id="comment" style="width:250px; height:40px" />
+                </apex:pageBlockSectionItem>
+                <apex:inputHidden value="{!selectedRecord.fuseit_s2t__Trim_Uri__c}" id="recUri" required="true"/>
+                <apex:inputHidden value="{!selectedRecord.fuseit_s2t__Record_Number__c}" id="recNumber" required="true"/>
+            </apex:pageBlockSection>
+            
+            
+        </apex:pageBlock>
+        <apex:pageMessages />
+
+ </apex:outputPanel>
+
+</apex:form>
+</apex:page>

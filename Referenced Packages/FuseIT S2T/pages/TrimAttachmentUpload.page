@@ -1,0 +1,53 @@
+<apex:page showHeader="true" controller="fuseit_s2t.TrimAttachmentUploadController" tabstyle="Trim_Records__tab">
+<apex:form enctype="multipart/form-data" >
+    <script type="text/javascript">
+    function confirmationOverwrite() {
+        
+        var inputObj = document.getElementById("{!$Component.trimBlock.details.chkSectionItem.chkReplace}");
+
+        if('{!JSENCODE(attachmentId)}' > '' && inputObj.checked) {
+            return confirm('Overwrite contents of current Attachment ID {!JSENCODE(attachmentId)}');
+        } else { 
+            return true;
+        }
+    }
+    </script>
+        <apex:outputPanel id="trimTable">
+        
+            <apex:sectionHeader title="Trim Record" subtitle="Select Attachment"/>
+            <apex:pageBlock title="Upload or Select Existing Attachment" id="trimBlock">
+            
+                <apex:pageBlockButtons >
+                    <apex:commandButton action="{!upload}" value="Upload" onclick="return confirmationOverwrite()"/>
+                    <apex:commandButton value="Cancel" action="{!redirectCancel}" />
+                    <apex:commandButton value="Create Linked Record" action="{!redirectNewLinked}" rendered="{!isNBtnDisabled == false}" title="Create a Linked Record with an existing TRIM Record without any Salesforce Attachments." />
+                </apex:pageBlockButtons>
+                
+                <apex:pageBlockSection showHeader="false" columns="2" id="details">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Upload New File" for="file"/>
+                        <apex:inputFile value="{!fileBody}" filename="{!fileName}" id="file"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Available attachments"/>
+                        <apex:selectList value="{!attachmentId}" size="1">
+                            <apex:selectOptions value="{!attachmentItems}"/> 
+                            <apex:actionSupport event="onchange" action="{!redirectTrimRecord}" status="selectlistStatus"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Attachment Description" for="description"/>
+                        <apex:inputTextarea value="{!fileDescription}" id="description" rows="4" cols="60"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem id="chkSectionItem">
+                        <apex:outputLabel value="Replace and overwrite existing Attachment" for="chkReplace"/>
+                        <apex:inputCheckbox value="{!isOverwrite}" id="chkReplace" disabled="{!!isOverwrite}" selected="{!isOverwrite}"/>
+                    </apex:pageBlockSectionItem>
+ 
+                </apex:pageBlockSection>
+                <apex:actionStatus id="selectlistStatus"  startText=" Updating...."  stopText=""/>
+                <apex:pageMessages />
+            </apex:pageBlock>
+        </apex:outputPanel>
+        </apex:form>
+</apex:page>

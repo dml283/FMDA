@@ -1,0 +1,16 @@
+<apex:page standardcontroller="Line_Item__c" tabstyle="Line_Item__c" extensions="ViewLineItemController"> 
+    <apex:form >
+        <apex:sectionHeader title="Line Item" subtitle="{!Line_Item__c.Name}" rendered="{!$CurrentPage.Parameters.IsAjaxRequest != '1'}"/>
+        <apex:pageMessages ></apex:pageMessages>
+        <apex:pageBlock mode="maindetail">
+            <apex:pageBlockSection title="Line Item Information" columns="1" collapsible="false">
+                <apex:repeat value="{!$ObjectType.Line_Item__c.FieldSets['X' + Line_Item__c.Line_Item_Type__r.Line_Item_Category__r.Reference_Number__c]}" var="f">
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText}">
+                        <apex:outputText value="{!f.Label}" />
+                        <apex:outputField value="{!Entity[f]}" />
+                    </apex:pageBlockSectionItem>
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

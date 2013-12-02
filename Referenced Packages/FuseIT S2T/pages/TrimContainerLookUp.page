@@ -1,0 +1,59 @@
+<apex:page showHeader="false" Controller="fuseit_s2t.TrimContainerLookUpController" tabstyle="Trim_Records__tab">
+<apex:form >
+<script type="text/javascript">
+
+function setParentValue(val){
+
+    window.opener.setContainerValue(val);
+    self.close();
+}
+</script>
+ 
+    <apex:sectionHeader title="Trim Container" subtitle="Container Look up"/>
+    <apex:pageBlock title="Search Containers">
+
+        <apex:panelGrid columns="4" id="theGrid">
+        <apex:outputText value="Search Text"/>
+        <apex:inputText value="{!searchText}" id="theSearchText" title="You can use wild card * for non-URI search"/>
+		<apex:commandButton action="{!search}" value="Search" rerender="trimTable" status="searchStatus" title="You can use wild card * for non-URI search"/>
+		<input type="button" value="Close" class="btn" onclick="self.close()"/> 
+        </apex:panelGrid> 
+		
+		<apex:pageBlockSection columns="1">
+		<apex:selectRadio value="{!trimInputType}" title="You can use wild card * for non-URI search">
+			<apex:selectOptions value="{!RadioItems}"/>
+		</apex:selectRadio>
+        </apex:pageBlockSection> 
+        <br/>
+
+		<apex:actionStatus startText="Loading..."  stopText="" id="searchStatus"/> &nbsp;<br/>
+        <apex:outputPanel id="trimTable"> 
+        
+            <apex:pageMessages />
+            
+            <apex:pageBlockTable value="{!TrimContainers}" var="container">   
+            <apex:column >   
+                <apex:facet name="header">URI ID</apex:facet>    
+                <apex:outputLink onclick="return setParentValue('{!JSENCODE(container.uri)}')">{!container.uri}</apex:outputLink>
+            </apex:column> 
+            <apex:column >
+                <apex:facet name="header">Record Number</apex:facet>    
+                <apex:outputLink onclick="return setParentValue('{!JSENCODE(container.uri)}')">{!container.recordNumber}</apex:outputLink>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">Title</apex:facet>    
+                <apex:outputLink onclick="return setParentValue('{!JSENCODE(container.uri)}')">{!container.title}</apex:outputLink>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">Is an existing Container</apex:facet>    
+                <apex:outputLink onclick="return setParentValue('{!JSENCODE(container.uri)}')">{!container.isContainer}</apex:outputLink>
+            </apex:column>
+            </apex:pageBlockTable>
+            
+
+        </apex:outputPanel>
+
+    </apex:pageBlock>
+    
+</apex:form>
+</apex:page>

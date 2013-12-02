@@ -1,0 +1,82 @@
+<apex:page standardcontroller="Eligible_Claim_for_Payment__c" tabstyle="Eligible_Claim_for_Payment__c" >
+<!-- Begin Default Content REMOVE THIS -->
+<style></style>
+<script>
+	function openEventSearch() {
+        var keyword = $('.show-Election_Event__c').text();
+      	var input = $('.f-Registration__c').parent().children(0);
+        var currentRegId = document.getElementById(input.attr('id') + '_lkid').value;
+		input = $('.f-Stakeholder__c').parent().children(0);
+        var currentStakeholderId = document.getElementById(input.attr('id') + '_lkid').value;
+        var url = '/apex/SearchElectionEvent?isdtp=vw&keyword=' + keyword + '&StakeID=' + currentStakeholderId  + '&RegID=' + currentRegId;
+        window.open(url, '_blank' , 'width=1200,height=600,scrollbars=1,center=1');
+    }
+    
+   	function ReloadSection(itemId,jsonObj) {          
+        //$('.f-Election_Event__c').val(jsonObj['Id']);          
+        pickCustomLookup($(input[id*='f-Election_Event__c']).attr('id'), jsonObj['Id'], jsonObj['Name']);
+        lookupPick2('{!$Component.myForm}','f-Election_Event__c__lkid',$(input[id*='f-Election_Event__c']).attr('id'),jsonObj['Id'], jsonObj['Name'],true);
+        //alert(jsonObj['Id']);
+     }
+
+</script>
+
+<apex:sectionHeader title="Eligible Claim for Payment" subtitle="New Eligible Claim for Payment"/>
+<apex:pageMessages />
+<c:CommonScripts ></c:CommonScripts>
+<apex:form id="myForm" >	
+	<apex:pageBlock mode="edit" >	  
+	  <div style="text-align:center;padding-top:10px;padding-bottom:10px;"> 	
+      <apex:commandButton value="Save" action="{!save}"/>
+      <apex:commandButton value="Save & New" action="{!save}"/>
+      <apex:commandButton value="Cancel" action="{!cancel}"/>
+      </div>
+      
+      <apex:pageBlockSection title="Information" columns="2" >
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Public_Fund__c}" required="true"></apex:inputField>
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Reporting_Period__c}" required="true"></apex:inputField>
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Stakeholder__c}" required="true" styleClass="f-Stakeholder__c"></apex:inputField>
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Status__c}" required="true"></apex:inputField>      
+      </apex:pageBlockSection>
+      
+      <apex:pageBlockSection title="Claim for Payment Information" columns="2" id="cpi">
+      	 
+      	<apex:outputPanel >      	 
+      	     <input type="hidden" name="lkid" id="f-Election_Event__c__lkid" value=""/>	
+      		 <input type="hidden" name="lkold" id="f-Election_Event__c__lkold" value="null"/>
+      		 <input type="hidden" name="lktp" id="f-Election_Event__c__lktp" value=""/>
+      		 <input type="hidden" name="lspf" id="f-Election_Event__c__lspf" value=""/>
+      		 <input type="hidden" name="lspfsub" id="f-Election_Event__c__lspfsub" value=""/>
+      		 <input type="hidden" name="mod" id="Election_Event__mod" value="0"/>
+             <apex:outputText value="Election Event" styleclass="show-Election_Event__c" style="display:inline;"></apex:outputText>
+		     <apex:inputText value="{!Eligible_Claim_for_Payment__c.Election_Event__c} " styleclass="f-Election_Event__c" id="f-Election_Event__c" />
+		     <img src="/s.gif" class="lookupIcon" onblur="this.className = 'lookupIcon';" 
+		     onfocus="this.className = 'lookupIconOn';" 
+		     onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" 
+		     onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';"		     
+		     onclick="openEventSearch();"
+		     title="Election Event Lookup"/>
+	 	</apex:outputPanel>	 	
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Registration__c}" required="true" styleClass="f-Registration__c" ></apex:inputField>
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Expenditure_Cap__c}" required="true"></apex:inputField>
+      
+      </apex:pageBlockSection>
+      <apex:pageBlockSection title="Dates" columns="2">
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Lodgement_Due_Date__c}"></apex:inputField>
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Claimable_Date_From__c}"></apex:inputField>
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Request_for_Extension_Received__c}"></apex:inputField>
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Claimable_Date_To__c}" ></apex:inputField>
+      	<apex:inputField value="{!Eligible_Claim_for_Payment__c.Request_for_Extension_Date__c}"></apex:inputField>
+      </apex:pageBlockSection>
+
+      <div style="text-align:center;padding-top:10px;padding-bottom:10px;"> 	
+      <apex:commandButton value="Save" action="{!save}"/>
+      <apex:commandButton value="Save & New" action="{!save}"/>
+      <apex:commandButton value="Cancel" action="{!cancel}"/>
+      </div>
+
+    </apex:pageBlock>
+   
+   
+</apex:form>
+</apex:page>

@@ -1,0 +1,382 @@
+<apex:page standardController="Registration__c" tabStyle="Registration__c" extensions="GroupCandidateRegistrationController">
+    <script>
+        $(function(){   
+            //DE4639
+            $('.HCD-PoliticalParty').parent().css("position","relative"); 
+            initAccountLookup();
+        });
+        function initAccountLookup(){
+            $('a.f-AccountId').unbind('click');
+            $('a.f-AccountId').click(function(e){
+                if($('a.f-Election_Event1__c').parents().children().get(0).value==''){
+                    electionEventRequired(); e.preventDefault(); return false;
+                } else {
+					var eventID = $('a.f-Election_Event1__c').parents().parents().children().get(0).value;                    
+                	openCustomLookup("PersonSearch", this, "eid="+eventID); e.preventDefault(); return false;
+				}
+                /*
+                //alert($('a.f-Election_Event1__c').parents().parents().children(1).val())
+                if($('a.f-Election_Event1__c').parents().parents().children(1).val()=='000000000000000'){
+                    electionEventRequired(); e.preventDefault(); return false;
+				} else {                    
+                	openCustomLookup("PersonSearch", this); e.preventDefault(); return false;
+				}*/
+            });  
+            
+            $('a.f-Official_Agent__c').click(function(e){
+                QuickSaveAndLookupOaa(); e.preventDefault(); return false;
+            });
+            $('.f-Official_Agent__c').attr('disabled', 'disabled');       
+            
+        }
+        function onAjaxStop(){
+            initAccountLookup();
+        }
+    
+    	function politicalPartyChange(isHead){
+            var oldStr = "";
+            var newStr = "";
+            var flag = true;
+            $(".Political-Party-list").each(function() {
+                newStr = $(this).val();
+                if(oldStr != ""){
+                    if(newStr != oldStr){
+                        $('.Party-Details').val('');
+                        $('.Party-Details').attr('disabled', 'disabled');
+                        flag = false;
+                        return;
+                    }
+                }
+                oldStr = newStr;
+            });
+            if(flag){
+                $('.Party-Details').removeAttr('disabled');
+            }
+            if(isHead == 'true'){
+                updateHeadCandidateInTable();
+            }
+        }
+    	
+    	function partyDetailsChange(){            
+            $(".Political-Party-list").each(function() {
+                if($('.Party-Details').val() != ''){
+                    $(this).val($('.Party-Details').val());
+                    //$(this).parent().children().first().val($(this).val());
+                    //$(this).attr('disabled', 'disabled');
+                    //$(this).attr('readonly', true);
+                }
+                //else{
+                    //$(this).removeAttr('disabled');
+                //}  
+            });
+            if($('.Party-Details').val() != ''){
+            	$('.HCD-PoliticalParty').val($('.Party-Details').val());
+            	$('.disable-party').css("display","block");    
+                $('.HCD-PoliticalParty').css("color","#aaa");
+                $(".Political-Party-list").css("color","#aaa");
+            }else{
+                //alert('a');
+                $('.disable-party').css("display","none");  
+                $('.HCD-PoliticalParty').css("color","#000");
+                $(".Political-Party-list").css("color","#000");
+            }
+        }
+    </script>
+    <apex:form >
+        <c:CommonScripts />
+        <c:Overlay />
+        <apex:actionFunction name="updateElectionDetail" action="{!updateElectionDetail}" rerender="wrapper" focus="wrapper" status="overlayStatus"/>
+        <!-- US4808 ================================
+        <apex:actionFunction name="addDO" action="{!addDO}" rerender="wrapper" focus="wrapper"/>
+        <apex:actionFunction name="deleteDO" action="{!deleteDO}" rerender="wrapper" focus="wrapper"/>        
+        <apex:actionFunction name="sortData" action="{!sortData}" rerender="wrapper" focus="wrapper" status="overlayStatus">
+            <apex:param name="sortByColumn" value="" assignTo="{!sortByColumn}"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="updateDonationExpenditure" action="{!updateDonationExpenditure}" rerender="wrapper" status="overlayStatus">
+            <apex:param name="selectedID" value="" assignTo="{!selectedID}"/>
+        </apex:actionFunction>
+        =======================================US4808 -->
+        <apex:actionFunction name="electionEventRequired" action="{!ElectionEventRequired}" />                
+        
+        <apex:actionFunction name="addGM" action="{!addGM}" rerender="wrapperGroup" focus="wrapperGroup" />
+        
+        <apex:actionFunction name="deleteGM" action="{!deleteGM}" rerender="wrapperGroup" focus="wrapperGroup"/>
+        <apex:actionFunction name="sortDataGroup" action="{!sortDataGroup}" rerender="wrapperGroup" status="overlayStatus">
+            <apex:param name="sortByColumnGroup" value="" assignTo="{!sortByColumnGroup}"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="updateHeadCandidate" action="{!updateHeadCandidate}" rerender="wrapperGroup,wrapper" focus="wrapperGroup" status="overlayStatus"/>        
+        
+        <apex:actionFunction name="updateHeadCandidateInTable" action="{!updateHeadCandidateInTable}" rerender="headCandidateDetails,wrapper" focus="wrapperGroup" status="overlayStatus"/>
+        <apex:sectionHeader title="Registration" subtitle="New Registration" id="header"/>     
+        <apex:pageMessages escape="false" />
+        
+        <apex:pageBlock title="Group Candidate Registration" mode="edit">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Quick Save" action="{!Quicksave}"/>
+                <apex:commandButton value="Save" action="{!save}"/>
+                <apex:commandButton value="Cancel" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="Information" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['GroupCandidateReg.Information'].Content__c}</apex:outputPanel>
+            </apex:pageBlockSection>
+            
+            <!--<apex:pageBlockSection title="Registration Detail" columns="2">
+                <apex:outputField value="{!Registration.Name}"></apex:outputField>-->
+                <!--<apex:outputField value="{!Registration.RecordType.Name}"></apex:outputField>-->
+                <!--<apex:inputField value="{!Registration.Active__c}"/>
+            </apex:pageBlockSection>-->
+            
+            <apex:pageBlockSection title="Election Details" columns="1" id="eevent">
+                <apex:outputPanel styleClass="helptext">{!Labels['GroupCandidateReg.ElectionDetails'].Content__c}</apex:outputPanel>
+                <!--<apex:outputPanel >-->
+                    <div class="requiredInput" >
+                        <div class="requiredBlock"></div>
+                            <apex:inputField value="{!Registration.Election_Event1__c}" styleclass="f-Election_Event1__c" label="Election Event" required="false" onchange="setTimeout(updateElectionDetail, 500);"/>
+                    </div>
+                <apex:actionFunction name="updateElectionDetail" action="{!updateElectionDetail}" rerender="eventID" status="overlayStatus"/>
+                <apex:outputText value="{0,date,dd'/'MM'/'yyyy}" id="eventID" label="Date of Election">
+                    <apex:param value="{!DateOfElection}" /> 
+                </apex:outputText>
+                <!--</apex:outputPanel>-->
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Head Candidate Details" columns="1" id="headCandidateDetails">
+                <apex:outputPanel styleClass="helptext">{!Labels['GroupCandidateReg.HeadCandidateDetails'].Content__c}</apex:outputPanel>
+                <apex:inputField value="{!Registration.Stakeholder__c}" required="false" styleclass="f-AccountId" onChange="return updateHeadCandidate();" />
+                <apex:selectList label="Political Party:" size="1" value="{!headParty}" onChange="return updateHeadCandidate();">
+                    <apex:selectOptions value="{!partyList}"/>
+                </apex:selectList>
+                <apex:inputField value="{!Registration.Confirm_Signed_By_Stakeholder__c}" onChange="return updateHeadCandidate();"/>
+                <apex:inputField value="{!Registration.Date_Signed_By_Stakeholder__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Group Details" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['GroupCandidateReg.GroupDetailsName'].Content__c}</apex:outputPanel>
+                <apex:inputField value="{!Registration.Group_Name__c}"/>
+                <apex:inputField value="{!Registration.Ballot_Label__c}"/>
+                <apex:outputPanel styleClass="helptext">{!Labels['GroupCandidateReg.GroupDetailsMembers'].Content__c}</apex:outputPanel>
+            </apex:pageBlockSection>
+            
+            <apex:ActionRegion >
+                <div class="outer" id="outer"
+                style="overflow-y: scroll; overflow-x: auto;max-height: 530px;">
+                    <apex:outputPanel id="wrapperGroup">
+                        <apex:pageMessages />
+                        <script>
+                            $(function(){   
+                                partyDetailsChange();
+                            });
+                        </script>
+                        <table id="groupDetails" cellspacing="0"
+                        cellpadding="5" style="margin-top: 10px;">
+                            <thead>
+                                <tr class="table_header_bold">
+                                    <th></th> 
+                                    <th class="table_header_link" title="{!tableGroup.Column1_Description__c} " 
+                                    onClick="return sortDataValGroup('{!tableGroup.Column1_Name__c}');">
+                                        {!tableGroup.Column1_Name__c} {!IF(sortByColumnGroup == tableGroup.Column1_Name__c,IF(orderAscGroup,'▲','▼'),'')}
+                                        <apex:outputText rendered="{!$ObjectType.Group_Member__c.Fields.Candidate__c.InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Group_Member__c.Fields.Candidate__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </th>
+                                    <th class="table_header_link" title="{!tableGroup.Column2_Description__c}" 
+                                    onClick="return sortDataValGroup('{!tableGroup.Column2_Name__c}')">
+                                        {!tableGroup.Column2_Name__c} {!IF(sortByColumnGroup == tableGroup.Column2_Name__c,IF(orderAscGroup,'▲','▼'),'')}
+                                        <apex:outputText rendered="{!$ObjectType.Group_Member__c.Fields.Political_Party__c.InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Group_Member__c.Fields.Political_Party__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </th>
+                                    <th class="table_header_link" title="{!tableGroup.Column3_Description__c}" 
+                                    onClick="return sortDataValGroup('{!tableGroup.Column3_Name__c}')">
+                                        {!tableGroup.Column3_Name__c} {!IF(sortByColumnGroup == tableGroup.Column3_Name__c,IF(orderAscGroup,'▲','▼'),'')}
+                                        <apex:outputText rendered="{!$ObjectType.Group_Member__c.Fields.Head_Candidate__c.InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Group_Member__c.Fields.Head_Candidate__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </th>
+                                    <th class="table_header_link" title="{!tableGroup.Column4_Description__c}" 
+                                    onClick="return sortDataValGroup('{!tableGroup.Column4_Name__c}')">
+                                        {!tableGroup.Column4_Name__c} {!IF(sortByColumnGroup == tableGroup.Column4_Name__c,IF(orderAscGroup,'▲','▼'),'')}
+                                        <apex:outputText rendered="{!$ObjectType.Group_Member__c.Fields.Confirm_Signed_By_Candidate__c.InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Group_Member__c.Fields.Confirm_Signed_By_Candidate__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </th>
+                                </tr>                           
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!GMWrapper}" var="GMvar">
+                                    <apex:outputPanel layout="none" rendered="{!NOT(GMvar.groupMember.Head_Candidate__c)}">
+                                        <tr class="table_body" id="{!GMvar.id}">
+                                            <td><apex:inputCheckbox value="{!GMvar.include}" /></td>
+                                            <td><apex:inputField value="{!GMvar.groupMember.Candidate__c}" required="false" styleclass="f-AccountId"/></td>
+                                            <td style="position:relative;">
+                                                <div class="disable-party" style="position:absolute;width:100%;height:100%;z-index:1000;"></div>
+                                                <apex:selectList size="1" value="{!GMvar.groupMember.Political_Party__c}" onchange="politicalPartyChange('false');" styleClass="Political-Party-list">
+                                                    <apex:selectOptions value="{!GMvar.politicalPartyOps}"/>
+                                                </apex:selectList>
+                                            </td>
+                                            <td>
+                                                <apex:outputField value="{!GMvar.groupMember.Head_Candidate__c}"/>
+                                            </td>
+                                            <td>
+                                                <apex:inputField value="{!GMvar.groupMember.Confirm_Signed_By_Candidate__c}"/>
+                                            </td>
+                                        </tr>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="none" rendered="{!GMvar.groupMember.Head_Candidate__c}">
+                                        <tr class="table_body" id="{!GMvar.id}">
+                                            <td><input type="checkbox" value="false" disabled="true"/></td>
+                                            <td><apex:outputField value="{!GMvar.groupMember.Candidate__c}"/></td>
+                                            <td style="position:relative;">
+                                                <div class="disable-party" style="position:absolute;width:100%;height:100%;z-index:1000;"></div>
+                                                <apex:selectList size="1" value="{!GMvar.groupMember.Political_Party__c}" onChange="politicalPartyChange('true');" styleClass="Political-Party-list">
+                                                    <apex:selectOptions value="{!GMvar.politicalPartyOps}"/>
+                                                </apex:selectList>
+                                            </td>
+                                            <td>
+                                                <apex:outputField value="{!GMvar.groupMember.Head_Candidate__c}"/>
+                                            </td>
+                                            <td>
+                                                <apex:outputField value="{!GMvar.groupMember.Confirm_Signed_By_Candidate__c}"/>
+                                            </td>
+                                        </tr>
+                                    </apex:outputPanel>
+                                </apex:repeat>  
+                            </tbody>
+                        </table>
+                    </apex:outputPanel>
+                </div>
+                <br class="clear" />
+                
+                <apex:commandLink value="Add Row" action="{!addGM}" rerender="wrapperGroup" status="overlayStatus" styleclass="customlink"/>
+                <apex:commandLink value="Remove Selected Rows" action="{!deleteGM}" rerender="wrapperGroup" status="overlayStatus" styleclass="customlink"/>
+            </apex:ActionRegion>
+            
+            <br class="clear" />
+            
+            <apex:pageBlockSection title="Party Details" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['GroupCandidateReg.PartyDetails'].Content__c}</apex:outputPanel>
+                <apex:selectList label="Political Party:" size="1" value="{!Registration.Political_Party__c}" onchange="partyDetailsChange();" styleClass="Party-Details" >
+                    <apex:selectOptions value="{!partyList}"/>
+                </apex:selectList>              
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Official Agent Details" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['GroupCandidateReg.OfficialAgent'].Content__c}</apex:outputPanel>
+                <!--<apex:outputPanel >-->
+                    <apex:inputField value="{!Registration.Official_Agent__c}" styleclass="f-Official_Agent__c" label="Official Agent"/>
+                    <apex:actionFunction name="QuickSaveAndLookupOaa" action="{!QuickSaveAndLookupOaa}"/>
+                <!--</apex:outputPanel>-->
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Additional Details" columns="2">
+                <apex:inputField value="{!Registration.Date_Received__c}"/>
+                <apex:inputField value="{!Registration.EMA_ID__c}"/>
+                <apex:inputField value="{!Registration.Received_By__c}"/>
+                <apex:inputField value="{!Registration.HP_TRIM_File_No__c}"/>
+                <apex:inputField value="{!Registration.Active__c}"/>
+                <apex:inputField value="{!Registration.Source__c}"/>                
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1">
+                <apex:inputField value="{!Registration.Additional_Details__c}"/>
+            </apex:pageBlockSection>
+            
+            <!-- US4808 ================================
+            <apex:pageBlockSection title="Disclosure Obligation(s)" columns="1">
+                <apex:outputPanel styleClass="helptext">{!Labels['GroupCandidateReg.DisclosureObligation'].Content__c}</apex:outputPanel>
+            </apex:pageBlockSection>
+            <apex:ActionRegion >
+                <br class="clear" />
+                <div class="outer" id="outer"
+                style="overflow-y: scroll; overflow-x: auto;max-height: 530px;">
+                    <apex:outputPanel id="wrapper">
+                        <table id="disclosureObligation" cellspacing="0"
+                        cellpadding="5" style="margin-top: 10px;">
+                            <thead>
+                                <tr class="table_header_bold">
+                                    <th></th> 
+                                    <th class="table_header_link" title="{!table.Column1_Description__c} " 
+                                    onClick="return sortDataVal('{!table.Column1_Name__c}');">
+                                        {!table.Column1_Name__c} {!IF(sortByColumn == table.Column1_Name__c,IF(orderAsc,'▲','▼'),'')}
+                                        <apex:outputText rendered="{!$ObjectType.Disclosure_Obligation__c.Fields.Reporting_Period__c.InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Disclosure_Obligation__c.Fields.Reporting_Period__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </th>
+                                    <th class="table_header_link" title="{!table.Column2_Description__c}" 
+                                    onClick="return sortDataVal('{!table.Column2_Name__c}')">
+                                        {!table.Column2_Name__c} {!IF(sortByColumn == table.Column2_Name__c,IF(orderAsc,'▲','▼'),'')}
+                                        <apex:outputText rendered="{!$ObjectType.Disclosure_Obligation__c.Fields.Status__c.InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Disclosure_Obligation__c.Fields.Status__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </th>
+                                    <th class="table_header_link" title="{!table.Column3_Description__c}" 
+                                    onClick="return sortDataVal('{!table.Column3_Name__c}')">
+                                        {!table.Column3_Name__c} {!IF(sortByColumn == table.Column3_Name__c,IF(orderAsc,'▲','▼'),'')}
+                                        <apex:outputText rendered="{!$ObjectType.Disclosure_Obligation__c.Fields.Donations_Received_Cap__c.InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Disclosure_Obligation__c.Fields.Donations_Received_Cap__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </th>
+                                    <th class="table_header_link" title="{!table.Column4_Description__c}" 
+                                    onClick="return sortDataVal('{!table.Column4_Name__c}')">
+                                        {!table.Column4_Name__c} {!IF(sortByColumn == table.Column4_Name__c,IF(orderAsc,'▲','▼'),'')}
+                                        <apex:outputText rendered="{!$ObjectType.Disclosure_Obligation__c.Fields.Expenditure_Cap__c.InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Disclosure_Obligation__c.Fields.Expenditure_Cap__c.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </th>
+			=======================================US4808 -->                                    
+                                    <!--
+                                    <th class="table_header_link" title="{!table.Column5_Description__c}" 
+                                    onClick="return sortDataVal('{!table.Column5_Name__c}')">
+                                        {!table.Column5_Name__c} {!IF(sortByColumn == table.Column5_Name__c,IF(orderAsc,'▲','▼'),'')}
+                                    </th>
+                                    -->
+			<!-- US4808 ================================                                    
+                                </tr>                           
+                            </thead>
+                            <tbody>
+                                <apex:repeat value="{!DOWrapper}" var="DOvar">
+                                    <tr class="table_body" id="{!DOvar.id}">
+                                        <td><apex:inputCheckbox value="{!DOvar.include}" /></td>
+                                        <td>
+                                            <apex:selectList size="1" value="{!DOvar.disclosureOb.Reporting_Period__c}"
+                                                onchange="updateDonationExpenditure('{!DOvar.Id}');">
+                                                <apex:selectOptions value="{!DOvar.reportingPeriodOps}"/>
+                                            </apex:selectList>
+                                        </td>
+                                        <td>
+                                            <apex:inputField value="{!DOvar.disclosureOb.Status__c}"/>
+                                        </td>
+                                        <td>
+                                            <apex:selectList size="1" value="{!DOvar.disclosureOb.Donations_Received_Cap__c}">
+                                                <apex:selectOptions value="{!DOvar.donationReceivedCapOps}"/>
+                                            </apex:selectList>
+                                        </td>
+                                        <td>
+                                            <apex:selectList size="1" value="{!DOvar.disclosureOb.Expenditure_Cap__c}">
+                                                <apex:selectOptions value="{!DOvar.expenditureCapOps}"/>
+                                            </apex:selectList>
+                                        </td>
+			=======================================US4808 -->                                        
+                                        <!--
+                                        <td>
+                                            <apex:selectList size="1" value="{!DOvar.disclosureOb.Donation_Given_Cap__c}">
+                                                <apex:selectOptions value="{!DOvar.donationGivenCapOps}"/>
+                                            </apex:selectList>
+                                        </td>
+                                        -->
+			<!-- US4808 ================================                                        
+                                    </tr>
+                                </apex:repeat>  
+                            </tbody>
+                        </table>
+                    </apex:outputPanel>
+                </div>
+                <br class="clear" />
+                
+                <apex:commandLink value="Add Row" action="{!addDO}" rerender="wrapper" status="overlayStatus" styleclass="customlink"/>
+                <apex:commandLink value="Remove Selected Rows" action="{!deleteDO}" rerender="wrapper" status="overlayStatus" styleclass="customlink"/>
+            </apex:ActionRegion>
+            =======================================US4808 -->
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

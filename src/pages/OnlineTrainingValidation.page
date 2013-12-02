@@ -1,0 +1,92 @@
+<apex:page Controller="RetrieveAgentTrainingDetailsController" id="MoodlePage" showHeader="false" sideBar="false">
+    <script>
+    	var fadmsId;
+    	$(function(){
+            $('.saveButton').hide();
+        	fadmsId = '{!$CurrentPage.parameters.fadmsId}';
+            $('.fadmsId').text(fadmsId);
+            svcCalloutSearch(fadmsId);
+        })
+            
+        function Search() {
+            svcCalloutSearch(fadmsId);
+        }
+    	
+    	function Save() {
+            svcCalloutSave(fadmsId);
+        }
+    </script>
+    <c:CommonScripts ></c:CommonScripts>
+    <c:OnlineTrainingValidationScript />
+    
+    <body class="hasMotif lookupTab  LookupSearchFrame  brandNoBgrImg">
+        <div class="lookup">
+            <div class="bPageTitle">
+                <div class="ptBody secondaryPalette">
+                    <div class="content"><img title="" class="pageTitleIcon" alt="" src="/s.gif"/>
+                        <h1>Lookup</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="pBody">
+            </div>
+        </div>
+        
+        <c:Overlay ></c:Overlay>
+        
+        <apex:form id="pnlForm">
+            <apex:outputPanel id="pnl-pagemessages">
+                <apex:pageMessages />
+	        </apex:outputPanel>
+            <apex:actionRegion >
+                <apex:pageBlock title="Online Training Validation" mode="edit" id="SearchInfo">
+                    <apex:pageBlockButtons location="top">
+                        <apex:commandButton value="Search" onClick="Search();return false;" rerender="pnlForm"/>
+                        <apex:commandButton value="Save" onClick="Save();return false;" styleClass="saveButton" rerender="pnlForm"/>
+                        <apex:commandButton value="Cancel" onclick="top.window.close(); return false;" />
+                    </apex:pageBlockButtons>
+                    
+                    <apex:pageBlockSection columns="2">
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="FADMS ID" style="font-size:12px;" />
+                            <apex:outputPanel >
+                                <apex:outputText styleClass="fadmsId" style="font-size:12px;"/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="Official Training Result Outcome" style="font-size:12px;"/>
+                            <apex:outputPanel >
+                                <apex:outputText styleClass="resultOutcome" style="font-size:12px;"/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="Online Training Attempt Count" style="font-size:12px;" />
+                            <apex:outputPanel >
+                                <apex:outputText styleClass="attempCount" style="font-size:12px;"/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="Online Training User Status" style="font-size:12px;"/>
+                            <apex:outputPanel >
+                                <apex:outputText styleClass="userStatus" style="font-size:12px;"/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+            </apex:actionRegion>
+            
+            <apex:actionRegion >
+                <apex:pageBlock mode="edit" id="SearchResults" title="Online Training Attempts" >
+                    <apex:outputPanel >
+                        <div id="rsltMessage" style="margin:10px;"></div>
+                        <div id="moodleTableData"></div>
+                        <div style="clear:both;height:10px;" ></div>
+                    </apex:outputPanel>
+                </apex:pageBlock>
+            </apex:actionRegion>
+
+        </apex:form>
+        <div id="temp-overlay" class="overlay" style="display:none"></div>
+    </body>
+</apex:page>

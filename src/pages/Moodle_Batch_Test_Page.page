@@ -1,0 +1,17 @@
+<apex:page id="MoodlePage" Controller="RetrieveAgentsBatch" tabStyle="Account">
+
+    <apex:sectionHeader title="Moodle REST Service 2" subtitle="Retrieve Agent Training Details - Batch"/>
+    
+    <apex:form >
+        <apex:pageBlock >
+            Click to invoke the service<p/>
+            <p/>
+            
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!retrieveMoodleData}" value="Retrieve"/>
+            </apex:pageBlockButtons>
+              
+        </apex:pageBlock>
+    </apex:form>
+
+</apex:page>

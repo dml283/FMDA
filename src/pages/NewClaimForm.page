@@ -1,0 +1,58 @@
+<apex:page controller="NewClaimFormController" tabstyle="Disclosure_Claim_for_Payment__c">
+    <apex:form >
+        <apex:sectionHeader subtitle="New Disclosure"/>
+        
+        <apex:pageMessages escape="false"></apex:pageMessages>
+        <apex:pageBlock title="New Disclosure" mode="edit">
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!Save}" value="Save"/>
+                <apex:commandButton action="{!Cancel}" value="Cancel"/>
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="Information" columns="2">
+                <apex:inputField value="{!Entity.Stakeholder__c}"/>
+                <apex:inputField value="{!Entity.OwnerId}"/>
+                <apex:inputField value="{!Entity.Disclosure_Obligation__c}"/>
+                <apex:outputField value="{!Entity.RecordtypeId}"/>
+                <apex:inputField value="{!Entity.Eligible_Claim_for_Payment__c}"/>
+                <apex:inputField value="{!Entity.Status__c}"/>
+            	<apex:inputField value="{!Entity.Total_Claim_Amount__c}"/>
+                <apex:inputField value="{!Entity.Active__c}"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Disclosure Period">
+                <apex:inputField value="{!Entity.Disclosure_Period_Commences__c}"/>
+                <apex:inputField value="{!Entity.Disclosure_Period_Ends__c}"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Official/Party Agent Information" >
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Disclosure_Claim_for_Payment__c.Fields.Official_Agent__c.InlineHelpText}">
+                    <apex:outputText value="Official/Party Agent"/>
+                    <apex:inputField value="{!Entity.Official_Agent__c }"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Disclosure_Claim_for_Payment__c.Fields.Signed_By_Official_Agent_Date__c.InlineHelpText}">
+                    <apex:outputText value="Signed By Official/Party Agent"/>
+                    <apex:inputField value="{!Entity.Signed_By_Official_Agent_Date__c}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helptext="{!$ObjectType.Disclosure_Claim_for_Payment__c.Fields.Signed_By_Official_Agent__c.InlineHelpText}">
+                    <apex:outputText value="Signed By Official/Party Agent"/>
+                    <apex:inputField value="{!Entity.Signed_By_Official_Agent__c}"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Auditor Information" >
+                <apex:inputField value="{!Entity.Auditor_Name__c}"/>
+                <apex:inputField value="{!Entity.Auditor_Registration_Number__c}"/>
+                <apex:inputField value="{!Entity.Signed_by_Auditor__c}"/>
+                <apex:inputField value="{!Entity.Signed_by_Auditor_Date__c}"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Administrative Information">
+                <apex:inputField value="{!Entity.Received_By__c}"/>
+                <apex:inputField value="{!Entity.Date_Received__c}"/>
+                <apex:inputField value="{!Entity.Checked_By__c}"/>
+                <apex:inputField value="{!Entity.Date_Checked__c}" />
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

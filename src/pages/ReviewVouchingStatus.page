@@ -1,0 +1,182 @@
+<apex:page standardController="Line_Item__c" tabStyle="Line_Item__c" extensions="ReviewVouchingStatusController" title="Review Vouching Status">
+    
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <style type="text/css">
+        th.headerRow{white-space:normal!important;}
+    </style>
+    
+    <apex:form id="pnlForm"> 
+        <apex:sectionHeader title="Review Vouching Status (Line Item)" id="header"/>
+        
+        <apex:pageMessages escape="false"></apex:pageMessages>
+        
+        <apex:pageBlock mode="Edit" title="Line Item" id="LineItemBlock">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Back to Audit Line Item" onclick="top.window.location.href='/apex/AuditLineItemForm?do={!doID}&litId={!lineItemTypeId}';return false;"/>
+                <apex:commandButton value="Edit" action="{!btnEdit_Onclick}" status="overlayStatus" rerender="LineItemBlock" rendered="{!!isLineItemTableEdit}"/>
+                <apex:commandButton value="Save" action="{!btnSave_Onclick}" status="overlayStatus" rerender="LineItemBlock" rendered="{!isLineItemTableEdit}"/>
+                <apex:commandButton value="Cancel" action="{!btnCancel_Onclick}" status="overlayStatus" rerender="LineItemBlock" rendered="{!isLineItemTableEdit}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockTable style="width:100%" value="{!Entity}" var="item">
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                        	<apex:outputText value="Line Item Number"/>
+                            <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields['Name'].InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields['Name'].InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:facet>
+                    <apex:outputField value="{!Entity.Name}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                        	<apex:outputText value="Line Item Type"/>
+                            <apex:outputText rendered="{!$ObjectType.Line_Item_Type__c.Fields['Line_Item_Category_Text__c'].InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item_Type__c.Fields['Line_Item_Category_Text__c'].InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:facet>
+                    <apex:outputField value="{!Entity.Line_Item_Type__r.Line_Item_Category_Text__c}"/>
+                </apex:column>
+            	<apex:repeat var="f" value="{!MapLineItemFieldSets['X' + Entity.Line_Item_Type__r.Line_Item_Category__r.Reference_Number__c].Fields}">
+                	<apex:column value="{!Entity[f]}"/>
+                </apex:repeat>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                        	No Vouching Provided
+                            <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields['No_Vouching_Provided__c'].InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields['No_Vouching_Provided__c'].InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:facet>
+                    <apex:inputField value="{!Entity.No_Vouching_Provided__c}" rendered="{!isLineItemTableEdit}"/>
+                    <apex:outputField value="{!Entity.No_Vouching_Provided__c}" rendered="{!!isLineItemTableEdit}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                        	No Advertising Materials Provided
+                            <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields['No_Advertising_Material_Provided__c'].InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields['No_Advertising_Material_Provided__c'].InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:facet>
+                    <apex:inputField value="{!Entity.No_Advertising_Material_Provided__c}" rendered="{!isLineItemTableEdit}"/>
+                    <apex:outputField value="{!Entity.No_Advertising_Material_Provided__c}" rendered="{!!isLineItemTableEdit}"/>
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+        
+        <apex:pageBlock mode="edit" id="RelatedForm" title="Related Vouching">
+           
+                <apex:outputPanel >
+                    <apex:outputPanel style="float:left;padding:10px;">
+                        <apex:commandButton value="Remove Selected Vouching" action="{!btnRemoveVouching_OnClick}" status="overlayStatus" rerender="pnlForm"/>
+                        <apex:commandButton style="background:url('/img/alohaSkin/sync.png') 2px 3px no-repeat;width:22px;height:23px;" action="{!RelatedVouchList.Refresh}" status="overlayStatus" rerender="pnlForm"/>
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel styleclass="rolodex" style="float:right;padding:15px 15px;">
+                        <apex:repeat var="item" value="{!FilterKeys}">
+                            <apex:commandLink action="{!RelatedVouchList.Refresh}" status="overlayStatus" styleclass="listItem" rerender="pnlForm" >
+                                <span class="{!if(RelatedVouchList.FilterKey == item, 'listItemSelected', 'listItemPad')}">{!item}</span>
+                                <apex:param name="filterkeyR" value="{!item}" assignTo="{!RelatedVouchList.FilterKey}"/>
+                            </apex:commandLink>
+                        </apex:repeat>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            
+            <apex:pageBlockTable value="{!RelatedVouchList.Entities}" var="item">
+                <apex:column >
+                	<apex:facet name="header">
+                        <input type="checkbox" onclick="if(this.checked){$('.ckb-vouchRel').attr('checked', ' checked')} else{$('.ckb-vouchRel').removeAttr('checked')}" />
+                    </apex:facet>
+                    <apex:inputCheckbox value="{!item.IsSelected}" styleclass="ckb-vouchRel"/>
+                </apex:column>
+                <apex:column >
+                	<apex:facet name="header">Status</apex:facet>
+                    <apex:outputText >{!if(RelatedVouchList.IsRelated, 'Vouched', 'Not Vouched')}</apex:outputText>
+                </apex:column>
+                <apex:repeat value="{!$ObjectType.fuseit_s2t__Trim_Record__c.FieldSets.VouchingTRIMRecords}" var="f" >
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                <apex:commandLink action="{!RelatedVouchList.Sort}" rerender="pnlForm" status="overlayStatus"
+                                value="{!f.label} {!IF(RelatedVouchList.Pager.OrderBy != f.FieldPath, '', IF(RelatedVouchList.Pager.OrderDirection == 'ASC', '▲', '▼'))}">
+                                    <apex:param name="sortByColumn" value="{!f.FieldPath}" />
+                                    <apex:param name="sortDirection" value="{!IF(RelatedVouchList.Pager.OrderBy != f.FieldPath, 'ASC', IF(RelatedVouchList.Pager.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                </apex:commandLink>
+                           
+                                <apex:outputText rendered="{!$ObjectType.fuseit_s2t__Trim_Record__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.fuseit_s2t__Trim_Record__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText> 
+                            </apex:outputPanel>
+                        </apex:facet> 
+                        <apex:outputField value="{!item.Item[f]}" />
+                    </apex:column>
+                </apex:repeat>
+            </apex:pageBlockTable>
+            
+            <apex:outputPanel rendered="{!RelatedVouchList.Entities.Size > 0}" style="padding:1px;">
+                <c:Pagination pager="{!RelatedVouchList.Pager}" action="{!RelatedVouchList.Query}" rerender="pnlForm" status="overlayStatus" />
+            </apex:outputPanel>
+        </apex:pageBlock>
+        
+        <apex:pageBlock mode="edit" id="UnrelatedForm" title="Unrelated Vouching">
+            
+            <apex:outputPanel >
+                <apex:outputPanel style="float:left;padding:10px;">
+                    <apex:commandButton value="Add Selected Vouching" action="{!btnAddVouching_OnClick}" status="overlayStatus" rerender="pnlForm"/>
+                    <apex:commandButton style="background:url('/img/alohaSkin/sync.png') 2px 3px no-repeat;width:22px;height:23px;" action="{!UnrelatedVouchList.Refresh}" status="overlayStatus" rerender="pnlForm"/>
+                </apex:outputPanel>
+                
+                <apex:outputPanel styleclass="rolodex" style="float:right;padding:15px 15px;">
+                    <apex:repeat var="item" value="{!FilterKeys}">
+                        <apex:commandLink action="{!UnrelatedVouchList.Refresh}" status="overlayStatus" styleclass="listItem" rerender="pnlForm" >
+                            <span class="{!if(UnrelatedVouchList.FilterKey == item, 'listItemSelected', 'listItemPad')}">{!item}</span>
+                            <apex:param name="filterkeyU" value="{!item}" assignTo="{!UnrelatedVouchList.FilterKey}"/>
+                        </apex:commandLink>
+                    </apex:repeat>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            
+            
+            <apex:pageBlockTable value="{!UnrelatedVouchList.Entities}" var="item">
+                <apex:column >
+                	<apex:facet name="header">
+                        <input type="checkbox" onclick="if(this.checked){$('.ckb-vouchUnrel').attr('checked', ' checked')} else{$('.ckb-vouchUnrel').removeAttr('checked')}" />
+                    </apex:facet>
+                    <apex:inputCheckbox value="{!item.IsSelected}" styleclass="ckb-vouchUnrel"/>
+                </apex:column>
+                <apex:column >
+                	<apex:facet name="header">Status</apex:facet>
+                    <apex:outputText >{!if(UnrelatedVouchList.IsRelated, 'Vouched', 'Not Vouched')}</apex:outputText>
+                </apex:column>
+                <apex:repeat value="{!$ObjectType.fuseit_s2t__Trim_Record__c.FieldSets.VouchingTRIMRecords}" var="f" >
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                <apex:commandLink action="{!UnrelatedVouchList.Sort}" rerender="pnlForm" status="overlayStatus"
+                                value="{!f.label} {!IF(UnrelatedVouchList.Pager.OrderBy != f.FieldPath, '', IF(UnrelatedVouchList.Pager.OrderDirection == 'ASC', '▲', '▼'))}">
+                                    <apex:param name="sortByColumn" value="{!f.FieldPath}" />
+                                    <apex:param name="sortDirection" value="{!IF(UnrelatedVouchList.Pager.OrderBy != f.FieldPath, 'ASC', IF(UnrelatedVouchList.Pager.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                </apex:commandLink>
+                                <apex:outputText rendered="{!$ObjectType.fuseit_s2t__Trim_Record__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.fuseit_s2t__Trim_Record__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet> 
+                        <apex:outputField value="{!item.Item[f]}" />
+                    </apex:column>
+                </apex:repeat>
+            </apex:pageBlockTable>
+            
+            <apex:outputPanel rendered="{!UnrelatedVouchList.Entities.Size > 0}" style="padding:1px;">
+                <c:Pagination pager="{!UnrelatedVouchList.Pager}" action="{!UnrelatedVouchList.Query}" rerender="pnlForm" status="overlayStatus" />
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

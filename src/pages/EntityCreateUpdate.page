@@ -1,0 +1,143 @@
+<apex:page controller="EntitySearchController" title="Entity Edit" tabstyle="Account">
+    <script>
+        $(function(){
+        	{!StartUpScript}
+        })
+    </script>
+        <apex:form >
+            <apex:sectionHeader title="Entity Edit"/>
+            <apex:messages />
+            <c:CommonScripts ></c:CommonScripts>
+            <c:Overlay ></c:Overlay>
+            
+            <apex:actionFunction name="QuickSaveAccount" action="{!QuickSaveAccount}" rerender="wrapper" focus="wrapper" status="overlayStatus"/>
+            
+            <apex:pageBlock title="Stakeholder (Entity) Create / Update" mode="edit">
+                <apex:pageBlockButtons >
+                    <apex:commandButton value="Back" action="{!Cancel}" immediate="true"/>
+                    <apex:commandButton value="Quick Save" action="{!QuickSaveAccount}" />
+					<apex:commandButton value="Save" action="{!SaveAccountAndClose}"  />
+                    <apex:commandButton value="Cancel" onclick="top.window.close(); return false;" />
+                </apex:pageBlockButtons>
+                
+                <apex:pageBlockSection title="Stakeholder Details" columns="3">
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Name.InlineHelpText}">
+                        <apex:outputLabel value="Name" />
+                        <apex:outputPanel >
+                            <apex:inputField value="{!Acc.Name}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Phone.InlineHelpText}">
+                        <apex:outputLabel value="Phone" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.Phone}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+					<apex:inputField value="{!Acc.Email__c}"/>
+					
+					<apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ABN_ACN_Other__c.InlineHelpText}">
+                        <apex:outputLabel value="ABN/ACN/Other" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.ABN_ACN_Other__c}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Fax.InlineHelpText}">
+                        <apex:outputLabel value="Fax" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.Fax}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+					 <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Description.InlineHelpText}">
+                        <apex:outputLabel value="Description" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.Description}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="Official Address" columns="3">
+                     <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.BillingStreet.InlineHelpText}">
+                        <apex:outputLabel value="Street" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.BillingStreet}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.BillingCity.InlineHelpText}">
+                        <apex:outputLabel value="City" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.BillingCity}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.BillingState.InlineHelpText}">
+                        <apex:outputLabel value="State" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.BillingState}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.BillingPostalCode.InlineHelpText}">
+                        <apex:outputLabel value="Postal Code" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.BillingPostalCode}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.BillingCountry.InlineHelpText}">
+                        <apex:outputLabel value="Country" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.BillingCountry}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection columns="3" id="pbs-postal-address-details">
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                            <span class="pbSubExtra"><apex:commandButton value="Copy from Official Address" action="{!CopyFromOfficialAddress1}" status="overlayStatus" rerender="pbs-postal-address-details" style="float:right"/></span>
+                            <h3>Postal Address</h3>
+                        </apex:outputPanel>
+                    </apex:facet>
+                     <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingStreet.InlineHelpText}">
+                        <apex:outputLabel value="Street" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.ShippingStreet}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingCity.InlineHelpText}">
+                        <apex:outputLabel value="City" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.ShippingCity}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingState.InlineHelpText}">
+                        <apex:outputLabel value="State" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.ShippingState}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingPostalCode.InlineHelpText}">
+                        <apex:outputLabel value="Postal Code" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.ShippingPostalCode}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.ShippingCountry.InlineHelpText}">
+                        <apex:outputLabel value="Country" />
+                        <apex:outputPanel style="white-space:nowrap">
+                            <apex:inputField value="{!Acc.ShippingCountry}" />
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+
+            </apex:pageBlock>
+        </apex:form>
+</apex:page>

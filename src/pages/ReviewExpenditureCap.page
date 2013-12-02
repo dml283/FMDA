@@ -1,0 +1,178 @@
+<apex:page controller="ReviewExpenditureCapController" title="Review Expenditure Cap" tabStyle="Donation_Expenditure_Cap__c">
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <script>
+    	$(function(){
+            onAjaxStop();
+        })
+        function onAjaxStop() {
+            var text;
+            $('.Difference').each(function(){
+                text = $(this).text();
+                /*if (text == "0.00") {
+                    $(this).css('color','black');
+				} else*/
+                if (text.indexOf("-") >= 0) {
+                    $(this).css('color','red');
+                } else {
+                    $(this).css('color','green');
+                }
+            });
+        }
+     	function ReloadLitTableJS(litId){
+            ReloadLitTable(litId);
+            return true;
+        }
+    	function reloadit(litId){
+            if (litId.length > 0)
+            	ReloadLitTable(litId);
+            //location.reload();
+        }
+        function openLineItemNoteWithLitId(lineItemId,litId) {
+            //alert(document.URL);
+            var url = '/apex/LineItemNote?isdtp=vw&lineItemId=' + lineItemId + '&litId='+litId + '&retURL='+document.URL;
+            window.open(url, '_blank' , 'width=600,height=480,scrollbars=1,center=1');
+        }
+    </script>
+    <style type="text/css">
+        .pbTitle {
+        	white-space: nowrap
+    	}
+    </style>
+    
+    <apex:form id="pnlForm"> 
+        <apex:sectionHeader title="Review Expenditure Cap" id="header"/>
+        
+        <apex:actionFunction name="ReloadLitTable" action="{!ReloadLitTable}" rerender="pnlForm" status="overlayStatus">
+            <apex:param name="reloadLitId" value="" assignTo="{!reloadLitId}"/>
+        </apex:actionFunction>
+        
+        <apex:outputPanel id="pnlPageMessages">    
+            <apex:pageMessages escape="false" />
+        </apex:outputPanel>
+        
+        <apex:pageBlock mode="maindetail" rendered="{!lineItemTypeWrap.size > 0}">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Back" action="{!Back}"/>
+                <apex:commandButton value="Non-Compliance" onclick="openNonCompliancePage('{!doId}','{!RecordTypeName}','','Expenditure');return false;"/>
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection columns="5">
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel style="white-space:nowrap;" >
+                        Expenditure Cap: {!ExpenditureCap}
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel style="white-space:nowrap;" >
+                        Cap Amount: {!Amount}
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel style="white-space:nowrap;" >
+                        Total Expenditure: {!TotalExpenditure}
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel style="white-space:nowrap;" >
+                        Difference:&nbsp;<apex:outputText value="{!Difference}" styleClass="Difference"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel style="white-space:nowrap;" >
+                        Total ECE: {!TotalECE}
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel style="white-space:nowrap;" >
+                        Difference:&nbsp;<apex:outputText value="{!DifferenceECE}" styleClass="Difference"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+            </apex:pageBlockSection>
+           
+        </apex:pageBlock>
+        
+        <apex:repeat value="{!lineItemTypeWrap}" var="litWrap">
+            <apex:pageBlock title="{!Labels[litWrap.lit.Line_Item_Category__r.Reference_Number__c].Content__c}" mode="edit">
+                <p>
+                	{!Labels[litWrap.lit.Line_Item_Category__r.Reference_Number__c].Content__c}
+            	</p><br/>
+                
+                <apex:pageBlockSection columns="2">
+                    <apex:outputField value="{!litWrap.lit.Nil_Disclosure_Claim_for_Payment__c}" />
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputPanel rendered="{!litWrap.LineItemPagingInfo.TotalCount > 5}"> 
+                            Record per page&nbsp;&nbsp;
+                            <apex:selectList label="Record per page " size="1" value="{!litWrap.LineItemPagingInfo.PageSize}" onchange="return ReloadLitTableJS('{!litWrap.lit.Id}');">
+                                <apex:selectOptions value="{!numberItemPerPageOptions}"/>
+                            </apex:selectList>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+            	</apex:pageBlockSection>
+                <div id="{!litWrap.lit.Id}" style="width:100%;max-width:100%;overflow:auto;" >
+                	<apex:pageBlockTable var="lineItem" value="{!litWrap.liList}" style="width:100%" >
+                        <apex:repeat var="f" value="{!MapLineItemFieldSets['X' + litWrap.lit.Line_Item_Category__r.Reference_Number__c].Fields}">
+                            <apex:column >
+                                <apex:facet name="header">
+                                    <apex:outputPanel >
+                                        <apex:commandLink action="{!litWrap.Sort}" rerender="pnlForm" status="overlayStatus"
+                                        value="{!f.label} {!IF(litWrap.LineItemPagingInfo.OrderBy != f.FieldPath, '', IF(litWrap.LineItemPagingInfo.OrderDirection == 'ASC', '▲', '▼'))}">
+                                            <apex:param name="sortByColumn" value="{!f.FieldPath}" />
+            								<apex:param name="sortDirection" value="{!IF(litWrap.LineItemPagingInfo.OrderBy != f.FieldPath, 'ASC', IF(litWrap.LineItemPagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                        </apex:commandLink>
+                                        <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </apex:outputPanel>
+                                </apex:facet>
+                                <apex:outputField value="{!lineItem.Item[f]}" styleclass="f-{!f.FieldPath}" />
+                            </apex:column>
+                    	</apex:repeat>
+                        
+                        <apex:column >
+                            <apex:facet name="header">Status</apex:facet>
+                            <apex:outputField value="{!lineItem.Item.Line_Item_Status_Formula__c}"/>
+                    	</apex:column>
+                    
+                        <apex:column rendered="{!isCloneDisclosureObject}">
+                            <apex:facet name="header">Cloned from</apex:facet>
+                            <div style="position:relative">
+                                <!--<a href="/{!lineItem.Item.Cloned_Line_Item__c}" -->
+                                <a id="{!lineItem.Item.Cloned_Line_Item__c}" 
+                                onmouseout="LookupHoverDetail.getHover('{!lineItem.Item.Cloned_Line_Item__c}').hide();" 
+                                onmouseover="LookupHoverDetail.getHover('{!lineItem.Item.Cloned_Line_Item__c}', '/apex/viewlineitemhoverframe?id={!lineItem.Item.Cloned_Line_Item__c}&isdtp=vw').show();">
+                                    {!lineItem.Item.Cloned_Line_Item__r.Name}
+                                </a>
+                            </div>
+                        </apex:column>
+                        
+                        <apex:column >
+                            <apex:facet name="header">Notes</apex:facet>
+                            <apex:commandLink value="View" onclick="openLineItemNoteWithLitId('{!lineItem.Item.Id}','{!litWrap.lit.Id}');return false;" rendered="{!lineItem.isNoteExist}" />
+                            <apex:commandLink value="Add" onclick="openLineItemNoteWithLitId('{!lineItem.Item.Id}','{!litWrap.lit.Id}');return false;" rendered="{!!lineItem.isNoteExist}"/>
+                    	</apex:column>
+                    </apex:pageBlockTable>
+                </div>
+                <p>
+                	<c:Pagination pager="{!litWrap.LineItemPagingInfo}" action="{!litWrap.QueryLineItemTypes}" rerender="pnlForm" status="overlayStatus" />
+            	</p>
+                <apex:pageBlockSection >
+                    <apex:outputField value="{!litWrap.lit.Calculated_Audit_Amount__c}" rendered="{!litWrap.lit.Line_Item_Category__r.Calculated_Total_Audit_Amount__c}"/>
+                    <apex:outputField value="{!litWrap.lit.Form_Amount__c}" rendered="{!litWrap.lit.Line_Item_Category__r.Form_Total_Amount__c}"/>
+                    <apex:outputField value="{!litWrap.lit.Calculated_Audit_Count__c}" rendered="{!litWrap.lit.Line_Item_Category__r.Calculated_Total_Audit_Count__c}"/>
+                    <apex:outputField value="{!litWrap.lit.Form_Count__c}" rendered="{!litWrap.lit.Line_Item_Category__r.Form_Total_Count__c}"/>
+            	</apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:repeat>
+    </apex:form>
+</apex:page>

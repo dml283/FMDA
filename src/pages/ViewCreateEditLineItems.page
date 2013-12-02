@@ -1,0 +1,209 @@
+<apex:page standardController="Disclosure_Claim_for_Payment__c" tabstyle="Disclosure_Claim_for_Payment__c" extensions="ViewCreateEditLineItemsController">
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <style type="text/css">
+        .apexp .detailList .list .headerRow th{white-space:normal!important}
+    </style>
+    <script>
+    	var lastSectionId;
+    	$(function(){
+            lastSectionId = $('.pbSubheader img').first().parent().parent().attr('id');
+            onAjaxStop();
+        })
+         
+        function onAjaxStop(){
+            $('.pbSubheader img').click(function(e){
+                if($(this).hasClass('showListButton')){
+                    lastSectionId = $(this).parent().parent().attr('id');
+                	$('img.hideListButton').not($(this)).click();
+                }
+            });
+            //bind stakeholder person lookup
+            $('a.f-Stakeholder__c').unbind('click');
+            $('a.f-Stakeholder__c').click(function(e){
+        		openCustomLookup('PersonSearch', this); e.preventDefault(); return false;
+        	});
+            //filter line item status picklist
+            $('.f-Line_Item_Status__c option').each(function(){
+                if($(this).parent().hasClass('IsCloned')){
+                    if($(this).val()=='Same as Original' || $(this).val()=='Edited' || $(this).val()=='Deletion'){
+                        return;
+                    }
+                }
+                else{
+                    if($(this).val()=='Addition'){
+                        return;
+                    }
+                }
+                $(this).remove();
+            })
+            //select last opened tab
+        	$('img.hideListButton').click();
+            $(document.getElementById(lastSectionId)).find('.pbSubheader img').click();
+        }
+    
+    
+    LookupHoverDetail.prototype.position = function () {
+        var a = getElementByIdCS(this.id),
+            b = getObjX(a),
+            c = getObjY(a),
+            d = a.offsetWidth,
+            e = a.offsetHeight,
+            f = getScrollX(),
+            g = getScrollY(),
+            h = getWindowWidth(),
+            i = getWindowHeight();
+        a = this.originalClass + " ";
+        if (c + e + this.height < g + i) {
+            a += "top";
+            c += e
+                } else {
+                    a += "bottom";
+                    c -= this.height
+                        }
+        if (b + d - this.bubbleOffset + this.width < f + h) {
+            a += "Left";
+            b = b + d / 2 - this.bubbleOffset
+                } else {
+                    a += "Right";
+                    b = b + d / 2 - this.width 
+                        }
+        this.hover.setStyle("left", b + "px");
+        this.hover.setStyle("top", c + "px");
+        $wrapdiv = $(this.hover.div).children('div').first()[0];
+        $wrapdiv.className = a;
+        if ($wrapdiv) if (b = Util.hasStyleEndsWith($wrapdiv, "Override")) {
+            delStyleClass(this.hover.div, "lookupHoverDetailOverridable");
+            delStyleClass($wrapdiv, b);
+            addStyleClass(this.hover.div, b)
+                }
+    };
+    
+    function showHideAddRow(lineItemTypeId) {
+        /*if ($('.'+lineItemTypeId+'_NilCheckBox').is(':checked')) {
+            // $('.'+lineItemTypeId+'_Addrow').hide();
+            $('.'+lineItemTypeId+'_Form_Amount').attr('disabled',true);
+            $('.'+lineItemTypeId+'_Form_Count').attr('disabled',true);
+        } else {
+            //$('.'+lineItemTypeId+'_Addrow').show();
+            $('.'+lineItemTypeId+'_Form_Amount').attr('disabled',false);
+            $('.'+lineItemTypeId+'_Form_Count').attr('disabled',false);
+		}*/
+    }
+    </script>
+    <apex:form id="pnlForm">
+        <apex:sectionHeader title="Disclosure/Claim for Payment" subtitle="Disclosure/Claim for Payment" id="header" rendered="{!!IsInline}"/> 
+        <apex:outputPanel id="pnlPageMessages">    
+            <apex:pageMessages escape="false" />
+        </apex:outputPanel>
+        
+        <apex:pageBlock >
+	        <apex:repeat var="item" value="{!ListTabs}">
+	           	<apex:pageBlockSection title="{!item.Line_Item_Category__r.Line_Item_Category__c}" columns="1" >
+                    <apex:outputPanel style="margin-left:250px;">
+                        <apex:commandButton value="Edit" action="{!btnEdit_Click}" rendered="{!IsInline && !(item.Id == EdittingLineItemTypeId)}" status="overlayStatus" rerender="pnlForm" immediate="true">
+                            <apex:param name="EdittingLineItemTypeId" value="{!item.Id}"/>
+                        </apex:commandButton>
+                        <apex:commandButton value="Save & Calculate" action="{!btnQuickSave_Click}" rendered="{!(item.Id == EdittingLineItemTypeId)}" status="overlayStatus" rerender="pnlForm">
+                        	<apex:param name="LineItemTypeId" value="{!item.Id}"/>
+                        </apex:commandButton>
+                        <!--<apex:commandButton value="Save & Close" action="{!btnSaveClose_Click}" rendered="{!(item.Id == EdittingLineItemTypeId)}" />-->
+                        <apex:commandButton value="Cancel" action="{!btnCancel_Click}" rendered="{!(item.Id == EdittingLineItemTypeId)}" immediate="true" status="overlayStatus" rerender="pnlForm"/>
+                    </apex:outputPanel>
+                    <apex:outputPanel >
+                        <p>{!Labels[item.Line_Item_Category__r.Reference_Number__c].Content__c}</p>
+                    </apex:outputPanel>
+                    <apex:inputField value="{!item.Nil_Disclosure_Claim_for_Payment__c}" styleClass="{!item.Id}_NilCheckBox" 
+                    	rendered="{!(item.Id == EdittingLineItemTypeId)}"/>
+                    <script>$('.{!item.Id}_NilCheckBox').attr('disabled',{!hasRecordOnLineItemType});</script>
+                    <apex:outputField value="{!item.Nil_Disclosure_Claim_for_Payment__c}" rendered="{!!(item.Id == EdittingLineItemTypeId)}"/>
+                    
+	           		<apex:pageBlockTable var="lineItem" value="{!MapTabLineItems[item.Line_Item_Category__r.Reference_Number__c]}" style="width:100%">
+                        <apex:column >
+                            
+                            <apex:outputPanel rendered="{!Entity.IsTemplate__c == true}" style="white-space:nowrap">
+                            	<apex:commandLink action="{!btnDelRow_Click}" value="Remove" status="overlayStatus" rerender="pnlPageMessages, pnlForm" immediate="true">
+                                    <apex:param name="LineItemId" value="{!lineItem.Id}"/>
+                                	<apex:param name="LineItemTypeNo" value="{!item.Line_Item_Category__r.Reference_Number__c}"/>
+                                </apex:commandLink>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!Entity.IsTemplate__c != true}" style="white-space:nowrap">
+                                <apex:outputPanel rendered="{!lineItem.isEdit}" style="white-space:nowrap" >
+                                    <apex:commandLink action="{!btnSaveRow_Click}" value="Save" status="overlayStatus" rerender="pnlPageMessages, pnlForm">
+                                        <apex:param name="LineItemId" value="{!lineItem.Id}"/>
+                                        <apex:param name="LineItemTypeNo" value="{!item.Line_Item_Category__r.Reference_Number__c}"/>
+                                        <apex:param name="LineItemTypeId" value="{!item.Id}"/>
+                                    </apex:commandLink>
+                                    &nbsp;
+                                    <apex:commandLink action="{!btnCancelRow_Click}" value="Cancel" status="overlayStatus" rerender="pnlPageMessages, pnlForm" immediate="true">
+                                        <apex:param name="LineItemId" value="{!lineItem.Id}"/>
+                                        <apex:param name="LineItemTypeNo" value="{!item.Line_Item_Category__r.Reference_Number__c}"/>
+                                        <apex:param name="LineItemTypeId" value="{!item.Id}"/>
+                                    </apex:commandLink>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!NOT(lineItem.isEdit)}" style="white-space:nowrap" >
+                                    <apex:commandLink action="{!btnEditRow_Click}" value="Edit" status="overlayStatus" rerender="pnlPageMessages, pnlForm" immediate="true">
+                                        <apex:param name="LineItemId" value="{!lineItem.Id}"/>
+                                        <apex:param name="LineItemTypeNo" value="{!item.Line_Item_Category__r.Reference_Number__c}"/>
+                                	</apex:commandLink>
+                                    &nbsp;
+                                    <apex:commandLink action="{!btnDelRow_Click}"  onclick="if(!confirm('The line item will be deleted pernamently. Proceed?')) return false;" value="Del" status="overlayStatus" rerender="pnlPageMessages, pnlForm" immediate="true">
+                                        <apex:param name="LineItemId" value="{!lineItem.Id}"/>
+                                        <apex:param name="LineItemTypeNo" value="{!item.Line_Item_Category__r.Reference_Number__c}"/>
+                                	</apex:commandLink>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:column>
+                        
+	           			<apex:repeat var="f" value="{!MapLineItemFieldSets['X' + item.Line_Item_Category__r.Reference_Number__c].Fields}">
+	           				<apex:column >
+	           					<apex:facet name="header">
+                                    <apex:outputPanel >{!f.label}
+                                        <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                        </apex:outputText>
+                                    </apex:outputPanel>
+                                </apex:facet>
+	           					<apex:inputField value="{!lineItem.Item[f]}" styleclass="f-{!f.FieldPath}" rendered="{!lineItem.IsEdit}" required="{!f.Required || f.DbRequired}"/>
+                                <apex:outputField value="{!lineItem.Item[f]}" styleclass="f-{!f.FieldPath}" rendered="{!!lineItem.IsEdit}"/>
+	           				</apex:column>
+                        </apex:repeat>
+                        <apex:column rendered="{!Entity.Cloned_Disclosure_Claim_for_Payment__c != null}">
+                            <apex:facet name="header">Status</apex:facet>
+                            <apex:outputField value="{!lineItem.Item.Line_Item_Status_Formula__c}" rendered="{!!lineItem.IsEdit}"/>
+                            <apex:inputField value="{!lineItem.Item.Line_Item_Status__c}" rendered="{!lineItem.IsEdit}" styleclass="{!IF(lineItem.Item.Cloned_Line_Item__c == null,'f-Line_Item_Status__c','f-Line_Item_Status__c IsCloned')}"/>
+                        </apex:column>
+                        
+                        <apex:column rendered="{!Entity.Cloned_Disclosure_Claim_for_Payment__c != null}">
+                            <apex:facet name="header">Cloned from</apex:facet>
+                            <div style="position:relative">
+                                <a href="/{!lineItem.Item.Cloned_Line_Item__c}" 
+                                id="{!lineItem.Item.Cloned_Line_Item__c}" 
+                                onmouseout="LookupHoverDetail.getHover('{!lineItem.Item.Cloned_Line_Item__c}').hide();" 
+                                onmouseover="LookupHoverDetail.getHover('{!lineItem.Item.Cloned_Line_Item__c}', '/apex/viewlineitemhoverframe?id={!lineItem.Item.Cloned_Line_Item__c}&isdtp=vw').show();">
+                                    {!lineItem.Item.Cloned_Line_Item__r.Name}
+                                </a>
+                            </div>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                    <apex:outputPanel >
+                        <apex:commandLink styleClass="{!item.Id}_Addrow" value="Add row" action="{!btnAddRow_Click}" status="overlayStatus" rerender="pnlPageMessages, pnlForm" rendered="{!item.Line_Item_Category__r.Add_Row__c == true}" style="text-decoration:underline">
+                            <apex:param name="LineItemTypeNo" value="{!item.Line_Item_Category__r.Reference_Number__c}"/>
+                        </apex:commandLink>
+                        <script>
+                        	if ({!item.Nil_Disclosure_Claim_for_Payment__c}) {
+                            	$('.{!item.Id}_Addrow').hide();
+                            }
+                        </script>
+                    </apex:outputPanel>
+                    <apex:inputField value="{!item.Calculated_Amount__c}" rendered="{!item.Line_Item_Category__r.Calculated_Total_Amount__c}"/>
+                    <apex:inputField styleClass="{!item.Id}_Form_Amount" value="{!item.Form_Amount__c}" rendered="{!(item.Id == EdittingLineItemTypeId) && !item.Nil_Disclosure_Claim_for_Payment__c && item.Line_Item_Category__r.Form_Total_Amount__c}"/>
+                    <apex:outputField value="{!item.Form_Amount__c}" rendered="{!(!(item.Id == EdittingLineItemTypeId) || item.Nil_Disclosure_Claim_for_Payment__c)&& item.Line_Item_Category__r.Form_Total_Amount__c}"/>
+                    <apex:inputField value="{!item.Calculated_Count__c}" rendered="{!item.Line_Item_Category__r.Calculated_Total_Count__c}"/>
+                    <apex:inputField styleClass="{!item.Id}_Form_Count" value="{!item.Form_Count__c}" rendered="{!(item.Id == EdittingLineItemTypeId) && !item.Nil_Disclosure_Claim_for_Payment__c && item.Line_Item_Category__r.Form_Total_Count__c}"/>
+                    <apex:outputField value="{!item.Form_Count__c}" rendered="{!(!(item.Id == EdittingLineItemTypeId) || item.Nil_Disclosure_Claim_for_Payment__c) && item.Line_Item_Category__r.Form_Total_Count__c}"/>
+                </apex:pageBlockSection>
+	       	</apex:repeat>
+        </apex:pageBlock>
+    </apex:form>    
+</apex:page>

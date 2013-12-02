@@ -1,0 +1,3 @@
+<apex:page standardController="Audit_Checklist__c" extensions="AuditChecklistRedirectController" action="{!Redirect}">
+    {!Audit_Checklist__c.IsTemplate__c}
+</apex:page>

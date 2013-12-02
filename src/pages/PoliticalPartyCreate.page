@@ -1,0 +1,83 @@
+<apex:page standardController="Account" tabStyle="Account" extensions="PoliticalPartyCreateController" 
+title="New Political Party" action="{!Redirect}">
+    <script>
+        $(function(){
+            //$('.partyAgent').attr("disabled","disabled");
+        	$('a.f-AccountId').click(function(e){
+        		openCustomLookup("PersonSearch", this); e.preventDefault(); return false;
+        	});
+            $('a.f-Official_Agent__c').click(function(e){
+            	QuickSaveAndLookupOaa(); e.preventDefault(); return false;
+            })
+        })
+    </script>
+    
+    <apex:form id="myForm">
+        <c:CommonScripts />
+        <c:Overlay />
+        <apex:sectionHeader title="Registration" subtitle="New Registration" id="header"/>
+        <apex:outputPanel id="pnl-pagemessages">
+            <apex:pageMessages ></apex:pageMessages>
+        </apex:outputPanel>
+        
+        <apex:pageBlock title="Select Stakeholder Record Type" rendered="{!!ShowForm}">
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!btnSelectRecordType_Click}" value="Continue"/>
+                <apex:commandButton action="{!Cancel}" value="Cancel"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection showheader="false">
+            	<apex:pageBlockSectionItem >
+                	<apex:outputText >Stakeholder Record Type</apex:outputText>
+                    <apex:selectList size="1" required="true">
+                    	<apex:selectOptions value="{!recordTypeList}"/>
+                    </apex:selectList> 
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <apex:pageBlock title="New Political Party" mode="edit" rendered="{!ShowForm}">
+            
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Save" action="{!save}"/>
+                <apex:commandButton value="Cancel" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="Political Party Information" columns="2">
+                <apex:inputField value="{!Acc.Name}"/>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Stakeholder Record Type" />
+                    <apex:outputPanel style="white-space:nowrap">
+                        <apex:outputText value="Political Party"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                
+                <apex:outputField value="{!Acc.Party_Agent__c}"  />
+                <apex:inputField value="{!Acc.Registration_Type__c}" />
+                <apex:inputField value="{!Acc.Registered_Officer__c}"  styleclass="f-AccountId"/>
+                <apex:inputField value="{!Acc.Date_of_Registration__c}" />
+                
+                <apex:outputText value=""></apex:outputText>
+                <apex:inputField value="{!Acc.Date_of_Deregistration__c}" />
+                
+                
+                <apex:inputField value="{!Acc.BillingStreet}" />
+                <apex:inputField value="{!Acc.ShippingStreet}" />
+                
+                <apex:inputField value="{!Acc.BillingCity}" />
+                <apex:inputField value="{!Acc.ShippingCity}" />
+                
+                <apex:inputField value="{!Acc.BillingState}" />
+                <apex:inputField value="{!Acc.ShippingState}" />
+                
+                <apex:inputField value="{!Acc.BillingPostalCode}" />
+                <apex:inputField value="{!Acc.ShippingPostalCode}" />
+                
+                <apex:inputField value="{!Acc.BillingCountry}" />
+                <apex:inputField value="{!Acc.ShippingCountry}" />
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="System Information" columns="1">
+                <apex:inputField value="{!Acc.ParentId}" />
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

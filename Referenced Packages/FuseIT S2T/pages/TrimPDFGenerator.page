@@ -1,0 +1,63 @@
+<apex:page showHeader="true" Controller="fuseit_s2t.TrimPDFGeneratorController" tabstyle="Trim_Records__tab">
+<apex:form enctype="multipart/form-data">
+<script type="text/javascript">
+
+
+function openContainerSearch() {
+
+    var inputObj = document.getElementById("{!$Component.trimBlock.details.locUri}");
+    //alert(inputObj.value);
+    var containerWindow = window.open('{!URLFOR($Page.fuseit_s2t__TrimContainerLookUp)}?trimId={!selectedRecord.fuseit_s2t__Trim_ID__c}&uri=' + inputObj.value, 'ContainerLookUp', 'width=720,height=380,location=no,dependent=no,resizable=yes,toolbar=no,status=no,directories=no,menubar=no,scrollbars=yes',false);
+    containerWindow.focus();
+}
+
+function setContainerValue(newVal) {
+    var inputObj = document.getElementById("{!$Component.trimBlock.details.locUri}");
+    inputObj.value = newVal;
+    inputObj.focus();
+}
+
+
+</script>
+
+<apex:outputPanel id="trimTable"> 
+
+    <apex:sectionHeader title="Trim PDF Snapshot for {!parentTitleHTML}" subtitle="{!selectedRecord.Name}"/>
+        <apex:pageBlock title="Details" id="trimBlock">
+        
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!createPDF}" value="Save"/>
+                <apex:commandButton action="{!redirectBack}" value="Back" immediate="true"/>
+                <input type="button" class="btn" value="Container Search" onclick="openContainerSearch();return false;" />
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="Details" columns="2" id="details">
+                <apex:inputField value="{!selectedRecord.Name}" required="true"/>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Attachment Name" for="file"/>
+                    <apex:inputField value="{!selectedRecord.fuseit_s2t__Attachment_Name__c}"  required="true"/>
+                </apex:pageBlockSectionItem>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_Location_ID__c}" id="locUri"/>
+                <apex:outputField value="{!selectedRecord.fuseit_s2t__File_Extension__c}" />
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_ID__c}" required="true"/>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_Record_Type__c}" id="trimRecordType" required="true"/>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Related Object ID"/>
+                    <apex:outputLink value="/{!parentId}">{!parentId}</apex:outputLink>
+                </apex:pageBlockSectionItem>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__isPreserve__c}" id="chkPreserve"/>
+                <apex:pageBlockSectionItem >
+                  <apex:outputLabel value="Trim Record Comment" for="comment"/>
+                  <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_Comment__c}" id="comment" style="width:250px; height:40px"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+        </apex:pageBlock>
+        <apex:pageMessages />
+        
+
+ </apex:outputPanel>
+
+</apex:form>
+    
+</apex:page>

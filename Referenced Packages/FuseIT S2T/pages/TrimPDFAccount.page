@@ -1,0 +1,10 @@
+<apex:page readOnly="true" standardController="Account" RenderAs="PDF">
+  <center>
+  <h1>PDF Account Snapshot</h1>
+     <apex:panelGrid columns="1" width="100%">
+        <apex:outputText value="{!Account.Name}"/>
+        <apex:outputText value="{!NOW()}"></apex:outputText>
+     </apex:panelGrid>
+  </center>
+<apex:detail subject="{!Account.Id}" relatedList="true" title="true"/> 
+</apex:page>

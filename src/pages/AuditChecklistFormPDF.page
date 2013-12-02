@@ -1,0 +1,176 @@
+<apex:page standardcontroller="Audit_Checklist__c" renderAs="pdf" extensions="AuditChecklistFormController"
+standardStylesheets="false"
+showHeader="false"
+applyBodyTag="false"
+applyHtmlTag="true">
+    <head>
+        <style type="text/css">
+            *{font-family: Arial, Helvetica, sans-serif; font-size:14px;}
+            .page-break{ page-break-before:always; }
+            .section{margin-top:10px;}
+            .heading-1,.heading-2,.heading-3,.heading-4,.heading-5{ font-weight:bold; margin:15px 0; padding:5px 0; width:100%; text-indent:10px; }
+            .heading-1{ background:#4F81BD; color:#fff; font-size:1.5em; }
+            .heading-2{ background:rgb(220,230,242); color:#4F81BD; }
+            .heading-3{ color:#4F81BD; border:1px #4F81BD solid; border-width:1px 0 0 1px; }
+            .heading-4{ color:#4F81BD; border:1px #4F81BD dotted; border-width:1px 0 0 1px; }
+            .heading-5{ color:#4F81BD; border:1px #4F81BD solid; border-width:0 0 1px 0; text-indent:25px; font-size:0.9em; }            
+            table.list{ border-collapse:collapse; width:100%; }
+            table.list td, table.list th{ padding:3px; border:1px solid #ddd;word-break:break-all !important;}
+            table.list thead{ background:#f1f1f1; }
+            table.detailList{ width:100%; }
+            table.detailList th.labelCol{ width:25%; text-align:right; padding:5px; line-height:1em; }
+            table.detailList td.data2Col{ text-indent:20px; padding:5px; vertical-align:top; }
+            @page {
+            	size: 16.54in 11.69in;
+            	margin:20px;
+            }
+        </style>
+    </head>
+    <body>
+        <apex:sectionHeader title="Audit Checklist for '{!EntityDisclosure.Name}'"/>
+        
+        <div class="heading-1">Audit Checklist Info</div>
+        
+        <apex:pageBlock >  
+            
+            <div class="heading-2">General Info</div>
+            <apex:pageBlockSection columns="1">                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Stakeholder Name" />
+                    <apex:outputField value="{!EntityDisclosure.Stakeholder__c}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="File Number" />
+                    <apex:outputField value="{!EntityDisclosure.TRIM_Record_Number__c}"/>
+                    
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Area / Ward (if applicable)" />
+                    <apex:outputField value="{!EntityDisclosure.Disclosure_Obligation__r.Registration__r.Election_Event1__r.Electorate__c}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Party Affiliation" />
+                    <apex:outputField value="{!EntityDisclosure.Disclosure_Obligation__r.Registration__r.Political_Party__c}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Review Period" />
+                    <apex:outputField value="{!EntityDisclosure.Disclosure_Obligation__r.Lodgement_Due_Date__c}"/>
+                </apex:pageBlockSectionItem>  
+                
+                <apex:outputField value="{!EntityDisclosure.Initial_Audit_Officer__c}"/>
+                <apex:outputField value="{!EntityDisclosure.Initial_Audit_Date_Commenced__c}"/>                 
+            </apex:pageBlockSection>
+            
+            <div class="heading-2">General Info</div>
+            <apex:pageBlockSection columns="1">               
+                <apex:outputField value="{!EntityDisclosure.Initial_Audit_Date_Completed__c}"/>
+                <apex:outputField value="{!EntityDisclosure.Initial_Audit_Comments_Recommendations__c}"/>                
+            </apex:pageBlockSection>
+            
+            <div class="heading-2">INITIAL AUDIT APPROVED BY TEAM LEADER</div>
+            <apex:pageBlockSection columns="1">
+                <apex:outputField value="{!EntityDisclosure.Initial_Audit_Date_Approved__c}"/>
+                <apex:outputField value="{!EntityDisclosure.Initial_Audit_Approval_Comments__c}"/>                
+            </apex:pageBlockSection>
+            
+            <div class="heading-2">DATE FINAL AUDIT COMPLETED</div>
+            <apex:pageBlockSection columns="1">
+                <apex:outputField value="{!EntityDisclosure.Final_Audit_Date_Completed__c}"/>
+                <apex:outputField value="{!EntityDisclosure.Final_Audit_Comments_Recommendations__c}"/>                
+            </apex:pageBlockSection>
+            
+            <div class="heading-2">FINAL AUDIT APPROVED BY TEAM LEADER</div>
+            <apex:pageBlockSection columns="1" >
+                <apex:outputField value="{!EntityDisclosure.Final_Audit_Date_Approved__c}"/>
+                <apex:outputField value="{!EntityDisclosure.Final_Audit_Approval_Comments__c}"/>                 
+            </apex:pageBlockSection>
+            
+        </apex:pageBlock>  
+        
+        
+        <apex:repeat var="section" value="{!ListChecklistSection}">
+            <div class="heading-1 page-break">{!section.Name}</div>
+            
+            <apex:pageBlock mode="maindetail">
+                
+                <apex:pageBlockSection columns="1" showHeader="false">         
+                    
+                    <apex:outputField value="{!section.Description__c}"/>
+                    <apex:outputField value="{!section.Line_Item_Type__c}"/>
+                    <apex:outputField value="{!section.Not_Applicable__c}"/>
+                    
+                    <apex:pageBlockTable var="item" value="{!section.Audit_Checklist_Questions__r}">
+                        <apex:column value="{!item.Name}" style="width:1%">
+                            <apex:facet name="header">No.</apex:facet>
+                        </apex:column>
+                        <apex:column value="{!item.Item_Description__c}" >
+                            <apex:facet name="header">Description</apex:facet>
+                        </apex:column>
+                        <apex:column >  
+                            <apex:facet name="header">Response</apex:facet>                      
+                            <apex:outputField value="{!item.Response_Field_Text__c}" rendered="{!item.Response_Field_Type__c == 'Text' || item.Response_Field_Type__c == 'Single-Select Picklist' || item.Response_Field_Type__c == 'Multi-Select Picklist'}"/>
+                            <apex:outputField value="{!item.Response_Field_Number__c}" rendered="{!item.Response_Field_Type__c == 'Number'}"/>
+                            <apex:outputField value="{!item.Response_Field_Date__c}" rendered="{!item.Response_Field_Type__c == 'Date'}"/>
+                            <apex:outputField value="{!item.Response_Field_Currency__c}" rendered="{!item.Response_Field_Type__c == 'Currency'}"/>
+                        </apex:column>                     
+                    </apex:pageBlockTable>
+                    
+                    <apex:outputField value="{!section.Comments__c}"/>
+                </apex:pageBlockSection>
+                
+                <div class="heading-2" rendered="{!Step > 0 && Step <= ListChecklistSection.Size}" >Non-Compliance</div>
+                
+                <div class="heading-3">Disclosure Related Non-Compliance</div>
+                <div class="content">
+                	<!-- 
+                    <apex:pageBlockTable var="nc" value="{!MapSectionTask[section.Id][EntityDisclosure.Id].Items}" rendered="{!MapSectionTask[section.Id][EntityDisclosure.Id].Items.Size > 0}">
+                        <apex:repeat var="f" value="{!$ObjectType.Task.fieldSets.Non_Compliance}">
+                            <apex:column value="{!nc.Item[f]}" />
+                        </apex:repeat>
+                    </apex:pageBlockTable>
+                     -->
+                    <apex:pageBlockTable var="nc" value="{!MapSectionDoNc[Section.Id]}">                    	                    	
+		                 <apex:repeat var="f" value="{!$ObjectType.Task.fieldSets.Non_Compliance}">
+		                	<apex:column value="{!nc[f]}" />
+		                 </apex:repeat> 
+		            </apex:pageBlockTable>
+                </div>
+                
+                <div class="heading-3">Line Item Related Non-Compliance</div>
+                <div class="content">
+              	<apex:repeat var="headNc" value="{!MapSectionLiNc[section.id]}">
+		                <apex:pageBlockSection title="Non-Compliance Number - {!headNc.Non_Compliance_Number__c}" columns="1" >		                    
+		                    
+		                    <apex:pageBlockTable var="item" value="{!headNc}">
+		                        <apex:repeat var="f" value="{!$ObjectType.Task.fieldSets.Checklist_Header}">
+		                            <apex:column value="{!headNc[f]}"/>
+		                        </apex:repeat>
+		                    </apex:pageBlockTable>		                    
+		                    
+		                    <apex:repeat var="li" value="{!MapNcLi[headNc.Non_Compliance_Number__c]}">
+		                    	<apex:pageBlockSection title="Line Item - {!li.name}" columns="1" >
+			                        <apex:pageBlockTable var="item" value="{!li}">
+			                            <apex:repeat var="f" value="{!MapLineItemFieldSets['X' + li.line_item_Type__r.Line_Item_Category__r.Reference_Number__c].Fields}">
+			                                <apex:column value="{!item[f]}"/>
+			                            </apex:repeat>
+			                        </apex:pageBlockTable>
+			                        
+			                        <!-- <apex:pageBlockTable var="nc" value="{!MapLiTask[li.Id]}" >-->
+			                        <apex:pageBlockTable var="nc" value="{!MapNcLiTask[headNc.Non_Compliance_Number__c][li.Name]}" >
+			                            <apex:repeat var="f" value="{!$ObjectType.Task.fieldSets.Checklist_Body}">
+			                                <apex:column value="{!nc[f]}" />
+			                            </apex:repeat>
+			                        </apex:pageBlockTable>
+		                        </apex:pageBlockSection>
+		                    </apex:repeat>
+		                </apex:pageBlockSection>
+		            </apex:repeat>                	
+                </div>
+            </apex:pageBlock> 
+        </apex:repeat>
+    </body>
+</apex:page>

@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Follow</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <comment>A Trim Record must be created from an existing Standard or Custom Object</comment>
+        <content>TrimRecordMessage</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <comment>A Trim Record must be created from an existing Standard or Custom Object, or edited from the Trim Records Tab</comment>
+        <content>TrimRecordMessage</content>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Visualforce</type>
+    </actionOverrides>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
+    <description>A reference to a  record or attachment within Salesforce that is stored in Trim</description>
+    <enableActivities>false</enableActivities>
+    <enableEnhancedLookup>true</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Attachment_ID__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <label>Attachment ID</label>
+        <length>18</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Attachment_Name__c</fullName>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <label>Attachment Name</label>
+        <length>250</length>
+        <required>true</required>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Attachment_Type__c</fullName>
+        <deprecated>false</deprecated>
+        <description>Reference to the type of file the record Attachment ID points to.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Reference to the type of file the record Attachment ID points to.</inlineHelpText>
+        <label>Attachment Type</label>
+        <picklist>
+            <picklistValues>
+                <fullName>Attachment</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>ChatterFile</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>Download_Link__c</fullName>
+        <deprecated>false</deprecated>
+        <description>Creates a hyperlink to download and open the TRIM Record from the TRIM Server. Will only be displayed if fuseit_s2t__Trim_ID__r.fuseit_s2t__TRIM_IP_Address__c has a value.</description>
+        <externalId>false</externalId>
+        <formula>HYPERLINK(Trim_ID__r.Trim_IP_Address__c &amp;  SUBSTITUTE(Record_Number__c, Trim_ID__r.Record_Link_Old_Text__c, Trim_ID__r.Record_Link_New_Text__c), &quot;Open from TRIM&quot;)</formula>
+        <inlineHelpText>Creates a hyperlink to download and open the TRIM Record from the TRIM Server. Will only be displayed if fuseit_s2t__Trim_ID__r.fuseit_s2t__TRIM_IP_Address__c has a value.</inlineHelpText>
+        <label>Download Link</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>File_Extension__c</fullName>
+        <deprecated>false</deprecated>
+        <description>The file extension that the attachment will be saved as in Trim.
+An extension is required when the file is being saved to Trim e.g. .pdf</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The file extension that the attachment will be saved as in Trim.
+An extension is required when the file is being saved to Trim e.g. &quot;.pdf&quot; or &quot;.docx&quot;</inlineHelpText>
+        <label>File Extension</label>
+        <length>6</length>
+        <required>false</required>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Last_Sync_Time__c</fullName>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <label>Last Sync Time</label>
+        <required>false</required>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Logging__c</fullName>
+        <deprecated>false</deprecated>
+        <description>System log file about the last synchronization for the record into Trim</description>
+        <externalId>false</externalId>
+        <inlineHelpText>System log file about the last synchronization for the record into Trim</inlineHelpText>
+        <label>Logging</label>
+        <length>32768</length>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Parent_ID__c</fullName>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <label>Parent ID</label>
+        <length>18</length>
+        <required>true</required>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Record_Number__c</fullName>
+        <deprecated>false</deprecated>
+        <description>The Trim Record Number</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The Trim Record Number</inlineHelpText>
+        <label>Record Number</label>
+        <length>50</length>
+        <required>false</required>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Trim_Comment__c</fullName>
+        <deprecated>false</deprecated>
+        <description>A text box to allow a comment to be saved in Trim with the Record.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A text box to allow a comment to be saved in Trim with the Record.</inlineHelpText>
+        <label>Trim Comment</label>
+        <required>false</required>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Trim_ID__c</fullName>
+        <deleteConstraint>Restrict</deleteConstraint>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <label>Trim Server</label>
+        <referenceTo>Trim__c</referenceTo>
+        <relationshipLabel>Trim Records</relationshipLabel>
+        <relationshipName>Trim_Records</relationshipName>
+        <required>true</required>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Trim_Location_ID__c</fullName>
+        <deprecated>false</deprecated>
+        <description>The Trim Container location ID for this file. If not specified the default will be used.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The Trim Container location ID for this file. If not specified the default will be used.</inlineHelpText>
+        <label>Trim Container Uri</label>
+        <length>50</length>
+        <required>false</required>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Trim_Record_Type__c</fullName>
+        <deprecated>false</deprecated>
+        <description>The Trim Record Type for the Salesforce Attachment</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The Trim Record Type for the Salesforce Attachment</inlineHelpText>
+        <label>Record Type</label>
+        <picklist>
+            <picklistValues>
+                <fullName>Document</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>EFA External Document</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>Trim_Status__c</fullName>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <label>Trim Status</label>
+        <picklist>
+            <picklistValues>
+                <fullName>Synchronized</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Scheduled</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>None</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Processing</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Failed</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Delete</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Error</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>Trim_Uri__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <deprecated>false</deprecated>
+        <description>Trim Document unique URI</description>
+        <externalId>true</externalId>
+        <label>Trim Record Uri</label>
+        <length>18</length>
+        <required>false</required>
+        <trackHistory>true</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>isDelete__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>Field used to determine if the record should be deleted.</description>
+        <externalId>false</externalId>
+        <label>Mark for deletion</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>isPreserve__c</fullName>
+        <defaultValue>true</defaultValue>
+        <deprecated>false</deprecated>
+        <description>If this checkbox is checked, then S2T will not delete the related record held in Trim, even if the Salesforce Attachment or File is deleted or if this Salesforce Trim Record is deleted.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>If checked the related HP Trim record will be preserved in the event that this Salesforce Trim Record is deleted or if the associated Salesforce attachment or File is deleted.</inlineHelpText>
+        <label>Preserve HP Trim Document</label>
+        <trackHistory>false</trackHistory>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>Trim Record</label>
+    <nameField>
+        <label>Trim Record Name</label>
+        <trackHistory>true</trackHistory>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Trim Records</pluralLabel>
+    <recordTypeTrackHistory>true</recordTypeTrackHistory>
+    <recordTypes>
+        <fullName>Default</fullName>
+        <active>true</active>
+        <label>Default</label>
+        <picklistValues>
+            <picklist>Attachment_Type__c</picklist>
+            <values>
+                <fullName>Attachment</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>ChatterFile</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Trim_Record_Type__c</picklist>
+            <values>
+                <fullName>Document</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>EFA External Document</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+        <picklistValues>
+            <picklist>Trim_Status__c</picklist>
+            <values>
+                <fullName>Delete</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Error</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Failed</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>None</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Processing</fullName>
+                <default>false</default>
+            </values>
+            <values>
+                <fullName>Scheduled</fullName>
+                <default>true</default>
+            </values>
+            <values>
+                <fullName>Synchronized</fullName>
+                <default>false</default>
+            </values>
+        </picklistValues>
+    </recordTypes>
+    <searchLayouts>
+        <customTabListAdditionalFields>Record_Number__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Trim_Status__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Attachment_Name__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Last_Sync_Time__c</customTabListAdditionalFields>
+        <excludedStandardButtons>New</excludedStandardButtons>
+        <searchResultsAdditionalFields>Attachment_Name__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Trim_Status__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Last_Sync_Time__c</searchResultsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

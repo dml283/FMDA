@@ -1,0 +1,74 @@
+<apex:page showHeader="true" standardController="fuseit_s2t__Trim_Record__c" extensions="fuseit_s2t.TrimChatterFileController" tabstyle="Trim_Records__tab">
+<apex:form >
+<script type="text/javascript">
+
+function confirmationDelete() {
+	var inputObj = document.getElementById("{!$Component.trimBlock.details.chkPreserve}");
+	if(!inputObj.checked) {
+    	return confirm('Checkbox "Preserve HP Trim Doc." is Not checked.\nThis Salesforce Record & the corresponding Trim Record in Trim will be marked for deletion on the next synchronization.\nThe associated Salesforce Attachment will not be deleted.\nDo you wish to continue?');
+    } else {
+	    return confirm('Checkbox "Preserve HP Trim Doc." is checked.\nThis Salesforce Record will be deleted immediately\nThe associated Salesforce Attachment will not be deleted.\nThe TRIM document in remote TRIM server will not be deleted.\nDo you wish to continue?');
+    }
+}
+
+
+function openContainerSearch() {
+
+	var inputObj = document.getElementById("{!$Component.trimBlock.details.locUri}");
+
+	var containerWindow = window.open('{!URLFOR($Page.TrimContainerLookUp)}?trimId={!selectedRecord.fuseit_s2t__Trim_ID__c}&uri=' + inputObj.value, 'ContainerLookUp', 'width=720,height=380,location=no,dependent=no,resizable=yes,toolbar=no,status=no,directories=no,menubar=no,scrollbars=yes',false);
+	containerWindow.focus();
+}
+
+function setContainerValue(newVal) {
+	var inputObj = document.getElementById("{!$Component.trimBlock.details.locUri}");
+	inputObj.value = newVal;
+	inputObj.focus();
+}
+
+
+</script>
+<apex:outputPanel id="trimTable"> 
+
+    <apex:sectionHeader title="Trim Document for Chatter File" subtitle="{!selectedRecord.Name}"/>
+        <apex:pageBlock title="Details" id="trimBlock">
+        
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!save}" value="Save"/>
+                <apex:commandButton action="{!redirectBack}" value="Back" immediate="true"/>
+                <apex:commandButton action="{!deleteRecord}" value="Delete" immediate="true" onclick="return confirmationDelete()"/>
+                <input type="button" class="btn" onclick="openContainerSearch();return false;" value="Container Search" />
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="Details" columns="2" id="details">
+                <apex:inputField value="{!selectedRecord.Name}" required="true"/>
+                <apex:outputField value="{!selectedRecord.fuseit_s2t__Trim_Status__c}"/>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_Location_ID__c}" id="locUri"/>
+                <apex:outputField value="{!selectedRecord.fuseit_s2t__Record_Number__c}"/>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__File_Extension__c}" required="true"/>
+                <apex:outputField value="{!selectedRecord.fuseit_s2t__Last_Sync_Time__c}"/>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_ID__c}" required="true"/>
+                <apex:outputField value="{!selectedRecord.fuseit_s2t__Attachment_Name__c}"/>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_Record_Type__c}" id="trimRecordType" required="true"/>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Chatter File ID"/>
+                    <apex:outputLink value="/{!selectedContentDocument.LatestPublishedVersionId}">{!selectedContentDocument.LatestPublishedVersionId}</apex:outputLink>
+                </apex:pageBlockSectionItem>
+                <apex:inputField value="{!selectedRecord.fuseit_s2t__isPreserve__c}" id="chkPreserve"/>
+	            <apex:pageBlockSectionItem >
+	            	<apex:outputLabel value="Trim Record Comment" for="comment"/>
+	            	<apex:inputField value="{!selectedRecord.fuseit_s2t__Trim_Comment__c}" id="comment" style="width:250px; height:40px"/>
+	            </apex:pageBlockSectionItem>
+                <apex:outputField value="{!selectedRecord.fuseit_s2t__Logging__c}"/>
+                <apex:outputField value="{!selectedRecord.fuseit_s2t__Download_Link__c}" rendered="{!selectedRecord.Trim_ID__r.fuseit_s2t__Trim_IP_Address__c != '' && selectedRecord.fuseit_s2t__Record_Number__c != ''}"/>
+            </apex:pageBlockSection>
+            
+            
+        </apex:pageBlock>
+        <apex:pageMessages />
+
+ </apex:outputPanel>
+
+</apex:form>
+    
+</apex:page>

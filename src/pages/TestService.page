@@ -1,0 +1,21 @@
+<apex:page >
+    <c:CommonScripts ></c:CommonScripts>
+    <c:postmessage />
+    <script>
+        $(function(){
+            //$.receiveMessage(letsgo, 'https://c.cs6.visual.force.com/apex/testservice');
+            //window.addEventListener("message", letsgo, false);
+            window.onmessage = letsgo;
+            window.open('http://buoctienso.com/window.html', '_blank' , 'width=640,height=480,scrollbars=1,center=1');
+        })
+        
+        
+        function letsgo(event) {
+            alert(event.data);
+            $('#content').append("<p>" + event.data + "</p>");
+        }
+    </script>
+    
+    <div id="content">
+    </div>
+</apex:page>

@@ -1,0 +1,207 @@
+<apex:component >
+    <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" />
+    <apex:includeScript value="/soap/ajax/26.0/connection.js"/>
+    <script type="text/javascript">
+    	sforce.connection.sessionId = '{!$Api.Session_ID}';
+        function openCustomLookup(page, element, querystring){
+        	var input = $(element).parent().children(0);
+            var currentId = document.getElementById(input.attr('id') + '_lkid').value;
+            var url = '/apex/' + page 
+	                        + '?isdtp=vw' + (querystring == undefined ? '' : '&' + querystring)
+	                        + '&fid=' + input.attr('id');
+            if(currentId != '' && currentId != '000000000000000'){
+            	url += '&currentid=' + currentId;
+            }
+            window.open(url, '_blank' , 'width=1000,height=480,scrollbars=1,center=1,resizable=1');//DE4727: allow resizable
+        }
+    	function openNonCompliancePage(whatId,recordTypeName,lineItemType,fromPage) {
+            //alert(document.URL);
+            var url = '/apex/NonComplianceForm?isdtp=vw&whatId=' + whatId + '&retURL='+document.URL;
+            if (recordTypeName != '') {
+                url += '&recordTypeName=' + recordTypeName;
+            }
+            if (lineItemType != '') {
+                url += '&litId=' + lineItemType;
+            }
+            if (fromPage != '') {
+                url += '&fromPage=' + fromPage;
+            }
+            window.open(url, '_blank' , 'width=1200,height=680,scrollbars=1,center=1,resizable=1');
+        }
+    	function openLineItemNote(lineItemId) {
+            //alert(document.URL);
+            var url = '/apex/LineItemNote?isdtp=vw&lineItemId=' + lineItemId + '&retURL='+document.URL;
+            window.open(url, '_blank' , 'width=600,height=480,scrollbars=1,center=1,resizable=1');
+        }
+    	function openReconcile(lineItemId) {
+            //alert(document.URL);
+            var url = '/apex/PopupReconciledLineItemInfo?isdtp=vw&lineItemId=' + lineItemId + '&retURL='+document.URL;
+            window.open(url, '_blank' , 'width=600,height=480,scrollbars=1,center=1');
+        }
+        function pickCustomLookup(fieldId, id, name){
+            /*
+            var temp = fieldId;
+            if(temp.indexOf('_lkid') < 0) {
+                temp += '_lkid';
+            } else {
+                fieldId = fieldId.replace('_lkid','');
+            }
+			*/
+            //lookupPick2('{!$Component.myForm}',fieldId + '_lkid',fieldId,id,name,true);
+            lookupPick2('{!$Component.myForm}',temp ,fieldId,id,name,true);
+        }
+        function sortDataVal(colName){
+            sortData(colName);
+            return true;
+        }
+        function sortDataValGroup(colName){
+			sortDataGroup(colName);
+			return true;
+        }
+        function noenter(ev) {
+            if (window.event && window.event.keyCode == 13 || ev.which == 13) {
+                $('.btn-search').click();
+                return false;
+            } else {
+                return true;
+            }
+        }
+    	function setDateRange(dateType) {
+            $('#calYearPicker')
+    			.find('option')
+    			.remove()
+    			.end();
+            if (dateType='birthday') {
+                var year =new Date().getFullYear();
+                for(var i = year - 70; i < year; i++){
+                    $("#calYearPicker").append("<option value='" + i+"'>" + i+ "</option>");
+                }
+            }
+		}
+    	/*
+    	function setValue(){
+         	var stri = $('.Phone').val();
+            //alert(stri);
+            //$("input[type='checkbox']").val('your value');
+            $('.critPhone').prop("checked", true);
+            //$('.critPhone').val('true');
+            //alert($('.critPhone').val());
+        }
+*/
+    LookupHoverDetail.prototype.position = function () {
+        var a = getElementByIdCS(this.id),
+            b = getObjX(a),
+            c = getObjY(a),
+            d = a.offsetWidth,
+            e = a.offsetHeight,
+            f = getScrollX(),
+            g = getScrollY(),
+            h = getWindowWidth(),
+            i = getWindowHeight();
+        a = this.originalClass + " ";
+        if (c + e + this.height < g + i) {
+            a += "top";
+            c += e
+                } else {
+                    a += "bottom";
+                    c -= this.height;
+                }
+        if (b + d - this.bubbleOffset + this.width < f + h) {
+            a += "Left";
+            b = b + d / 2 - this.bubbleOffset;
+        } else {
+            a += "Right";
+            b = b + d / 2 - this.width; 
+        }
+        
+        this.hover.setStyle("left", b + "px");
+        this.hover.setStyle("top", c + "px");
+        $wrapdiv = $(this.hover.div).children('div').first()[0];
+        $wrapdiv.className = a;
+        if ($wrapdiv) if (b = Util.hasStyleEndsWith($wrapdiv, "Override")) {
+            delStyleClass(this.hover.div, "lookupHoverDetailOverridable");
+            delStyleClass($wrapdiv, b);
+            addStyleClass(this.hover.div, b)
+                }
+    };
+    </script>
+    <style type="text/css">
+        <!--.helptext{color: maroon; font-style: italic;}-->
+        .helptext{}
+        .customlink {
+            color: blue !important;
+            text-decoration: underline;
+            padding-left: 10px;
+            padding-bottom: 5px;
+            float: left;
+        }
+        .customRequiredBlock {
+	        background-color: #c00;
+			position: relative;
+			left: -4px;
+			width: 3px;
+			height: 15px;
+			top: 1px;
+			bottom: 1px;
+		}
+        .customlink:hover {
+        	color: #00A3F5 !important;
+        }
+        #disclosureObligation, #groupDetails {
+            border: 1px solid;
+            border-color: #FFFFFF;
+            top-padding: 10px;
+            padding: 10px;
+        }
+        #disclosureObligation td, #groupDetails td {
+            border: 1px solid;
+            border-color: #FFFFFF;
+        }
+        #disclosureObligation th, #groupDetails th {
+            border: 1px solid;
+            border-color: #FFFFFF;
+            text-align: center;
+        }
+        tr.table_header_bold {
+            background: #91c5d4;
+            font-weight: bold;
+        }
+        
+        tr.table_header_bold td {
+            text-align: center;
+            valigh: middle !important;
+            color: #071914;
+        }
+        
+        tr.table_header {
+            background: #91c5d4;
+            font-weight: normal;
+        }
+        
+        tr.table_header td {
+            text-align: center;
+            valigh: middle !important;
+            color: #071914;
+        }
+        
+        tr.table_body {
+        	background: #D5EAF0;
+        }
+        
+        tr.table_body td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .table_header_link {
+            color: black ;
+            cursor: pointer;
+            cursor: hand;
+        }
+        .table_header_link:hover {
+        	color: blue !important;
+        }  
+        .clear {
+        	clear: both;
+        }
+    </style>
+</apex:component>

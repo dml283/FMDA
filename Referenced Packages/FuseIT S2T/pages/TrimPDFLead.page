@@ -1,0 +1,10 @@
+<apex:page readOnly="true" standardController="Lead" RenderAs="PDF">
+  <center>
+  <h1>PDF Lead Snapshot</h1>
+     <apex:panelGrid columns="1" width="100%">
+        <apex:outputText value="{!Lead.Name}"/>
+        <apex:outputText value="{!NOW()}"></apex:outputText>
+     </apex:panelGrid>
+  </center>
+<apex:detail subject="{!Lead.Id}" relatedList="true" title="true"/> 
+</apex:page>

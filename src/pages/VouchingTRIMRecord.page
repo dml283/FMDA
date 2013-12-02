@@ -1,0 +1,206 @@
+<apex:page controller="VouchingTRIMRecordController" tabStyle="fuseit_s2t__Trim_Record__c" title="Vouching TRIM Records">
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <style type="text/css">
+        .headerRow th{white-space:normal!important}
+    </style>
+    <script>
+    	$(function(){
+            onAjaxStop();
+        });
+    	function onAjaxStop() {
+            $('input[class*=-fuseit_s2t__Record_Number__c]').prop('disabled',true);
+            $('input[class*=-fuseit_s2t__Download_Link__c]').prop('disabled',true);
+            $('textarea[class*=-fuseit_s2t__Logging__c]').prop('disabled',true);
+        }
+    	function includeAll() {
+            var isChecked = $('.cb-Parent').is(":checked");
+            $('.cb-Child').prop('checked',isChecked);
+        }
+    	function ReloadSection(trimRecId, jsonObj) {
+    
+            var name = jsonObj['Name'];
+            var extension = "";
+            if (name.indexOf(".") != -1) {
+                extension = name.substring(name.lastIndexOf(".") + 1);
+            }
+            
+            $('.' + trimRecId + '-fuseit_s2t__Attachment_Name__c').val(name);
+            $('.' + trimRecId + '_show-fuseit_s2t__Attachment_Name__c').text(name);
+            $('.' + trimRecId + '-Name').val(name);
+            // $('.' + trimRecId + '-fuseit_s2t__Trim_Location_ID__c').val('location_Url');
+            $('.' + trimRecId + '-fuseit_s2t__Trim_Record_Type__c').val('Document');
+            $('.' + trimRecId + '-fuseit_s2t__Trim_Status__c').val('Scheduled');
+            $('.' + trimRecId + '-fuseit_s2t__isPreserve__c').prop('checked',true);
+            $('.' + trimRecId + '-fuseit_s2t__File_Extension__c').val(name);
+            $('.' + trimRecId + '-fuseit_s2t__Attachment_ID__c').val(jsonObj['Id']);
+            $('.' + trimRecId + '-fuseit_s2t__Parent_ID__c').val(jsonObj['ParentId']);
+        }
+    	function openAttachmentPopup(trimRecId) {
+            var doId = '{!$CurrentPage.parameters.do}';
+            var url = '/apex/AttachmentPopup?isdtp=vw&do=' + doId
+                       + '&trimRecId='+trimRecId;
+            window.open(url, '_blank' , 'width=800,height=600,scrollbars=1,center=1');
+        }
+    	function openReviewVouchingStatus(trimRecId) {
+            var url = '/apex/ReviewVouchingStatusTRIMRecord?isdtp=vw&trc=' + trimRecId;
+            window.open(url, '_blank' , 'width=1000,height=400,scrollbars=1,center=1');
+        }
+    	function confirmTrimStatus() {
+            var isFoundSche = false;
+            $("[class$='-fuseit_s2t__Trim_Status__c']").each(function(index){
+                if ($(this).text() == 'Scheduled') {
+                    isFoundSche = true;
+                    return false;
+                }
+            });
+            if (isFoundSche) {
+                return confirm('You are about to leave this page where there are currently records that have not been synchronized, continue?'); 
+            }
+            return true;
+        }
+    </script>
+    <style type="text/css">
+        .Line_Item_Type__c {
+        	width: 250px;
+        }
+        th.headerRow{white-space:normal!important;}
+    </style>
+    <apex:form id="pnlForm">
+        <apex:actionFunction name="Sort" action="{!QueryTRIMRecords}" rerender="pnlForm" status="overlayStatus">
+            <apex:param name="sortByColumn" value="" assignTo="{!TRIMRecordPagingInfo.OrderBy}"/>
+            <apex:param name="sortDirection" value="" assignTo="{!TRIMRecordPagingInfo.OrderDirection}"/>
+        </apex:actionFunction>
+        
+        <apex:sectionHeader title="Vouching TRIM Records" id="header"/>
+        <apex:outputPanel id="pnlPageMessages">    
+            <apex:pageMessages escape="false" />
+        </apex:outputPanel>
+
+        <apex:pageBlock mode="edit">
+            <apex:facet name="header">
+                <apex:outputPanel >
+                    <apex:outputPanel style="float:left;padding:10px;">
+                        <apex:commandButton value="Back" onclick="return confirmTrimStatus();" action="{!btnBackClick}" immediate="true"/>
+                        <apex:commandButton value="Add Row" action="{!btnAddRowClick}" status="overlayStatus" rerender="pnlForm"/>
+                        <apex:commandButton value="Synchronise Selected" action="{!btnSyncClick}" status="overlayStatus" rerender="pnlForm"/>
+                        <apex:commandButton title="Refresh Trim Status" style="background:url('/img/alohaSkin/sync.png') 2px 3px no-repeat;width:22px;height:23px;" action="{!btnRefreshClick}" status="overlayStatus" rerender="pnlForm"/>
+                        
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel styleclass="rolodex" style="float:right;padding:15px 85px;">
+                        <apex:repeat var="item" value="{!FilterKeys}">
+                            <apex:commandLink action="{!buildPagingInfo}" status="overlayStatus" styleclass="listItem" rerender="pnlForm" >
+                                <span class="{!if(FilterKey == item, 'listItemSelected', 'listItemPad')}">{!item}</span>
+                                <apex:param name="filterkey" value="{!item}" assignTo="{!FilterKey}"/>
+                            </apex:commandLink>
+                        </apex:repeat>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                
+            </apex:facet>
+			
+
+            <br/><br/><br/>
+            <apex:outputPanel rendered="{!TRIMRecordPagingInfo.TotalCount > 5}"> 
+                Record per page&nbsp;&nbsp;
+                <apex:selectList label="Record per page " size="1" value="{!TRIMRecordPagingInfo.PageSize}" >
+                    <apex:selectOptions value="{!numberItemPerPageOptions}"/>
+                    <apex:actionSupport event="onchange" action="{!QueryTRIMRecords}" status="overlayStatus" rerender="pnlForm"/>
+                </apex:selectList>
+            </apex:outputPanel>
+            
+            <div id="pnl-tableBlock" style="width:100%;max-width:100%;overflow-x:scroll;overflow-y:auto">
+                <apex:pageBlockTable var="Item" value="{!TRIMWrapperList}" style="width:100%" >
+                    <apex:column >
+                        <apex:facet name="header" >
+                            <apex:inputCheckbox styleClass="cb-Parent" onclick="includeAll();"/>
+                        </apex:facet>
+                        <apex:inputCheckbox value="{!Item.isInclude}" styleClass="cb-Child" rendered="{!!Item.isEdit}"/>
+                    </apex:column>
+                    
+                    <apex:column >
+                        <apex:facet name="header" >
+                            Action
+                        </apex:facet>
+                        <apex:outputPanel style="white-space:nowrap;">
+                            <apex:outputPanel rendered="{!Item.isEdit}" style="white-space:nowrap;">
+                                <apex:commandLink value="Save" action="{!btnSaveRowClick}" reRender="pnlForm" status="overlayStatus">
+                                    <apex:param name="recordID" value="{!Item.Id}"/>
+                                </apex:commandLink>
+                                 &nbsp;|&nbsp;
+                                <apex:commandLink value="Cancel" action="{!btnCancelRowClick}" reRender="pnlForm" status="overlayStatus" immediate="true">
+                                     <apex:param name="recordID" value="{!Item.Id}"/>
+                                </apex:commandLink>
+                            </apex:outputPanel>
+                            
+                            <apex:outputPanel rendered="{!!Item.isEdit}" style="white-space:nowrap;">
+                                <apex:commandLink value="Edit" action="{!btnEditRowClick}" reRender="pnlForm" status="overlayStatus">
+                                    <apex:param name="recordID" value="{!Item.Id}"/>
+                                </apex:commandLink>
+                                 &nbsp;|&nbsp;
+                                <apex:commandLink value="Del" action="{!btnDelRowClick}" reRender="pnlForm" status="overlayStatus">
+                                    <apex:param name="recordID" value="{!Item.Id}"/>
+                                </apex:commandLink>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:column>
+                        
+                    <apex:repeat var="f" value="{!MapTRIMRecordFieldSets['VouchingTRIMRecords'].Fields}">
+                        <apex:column >
+                            <apex:facet name="header">
+                                 <apex:outputPanel >
+                                    <apex:commandLink onClick="Sort('{!f.FieldPath}','{!IF(TRIMRecordPagingInfo.OrderBy != f.FieldPath, 'ASC', IF(TRIMRecordPagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}');return true;" 
+                                    value="{!f.label} {!IF(TRIMRecordPagingInfo.OrderBy != f.FieldPath, '', IF(TRIMRecordPagingInfo.OrderDirection == 'ASC', '▲', '▼'))}" 
+                                     rendered="{!f.FieldPath != 'fuseit_s2t__Logging__c'}" reRender="pnlForm" status="overlayStatus">
+                                    </apex:commandLink>
+                                     <apex:outputText value="{!f.label}" rendered="{!f.FieldPath == 'fuseit_s2t__Logging__c'}"/>
+                                    <apex:outputText rendered="{!$ObjectType.fuseit_s2t__Trim_Record__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                        <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.fuseit_s2t__Trim_record__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                    </apex:outputText>
+                                </apex:outputPanel>
+                            </apex:facet>
+                            
+                            <apex:inputField value="{!Item.item[f]}" styleclass="{!Item.Id}-{!f.FieldPath}" rendered="{!Item.IsEdit && f.FieldPath != 'fuseit_s2t__Attachment_Name__c' && f.FieldPath != 'Line_Item_Type__c'}" 
+                                required="{!f.Required || f.DbRequired}"/>
+                            
+                            <apex:selectList value="{!Item.item.Line_Item_Type__c}" styleclass="{!Item.Id}-{!f.FieldPath} {!f.FieldPath}" size="1" rendered="{!Item.IsEdit && f.FieldPath == 'Line_Item_Type__c'}">
+                            	<apex:selectOptions value="{!lineItemTypeOptionMap[Item.disclosureId]}" /> 
+                        	</apex:selectList>
+                            
+                            <apex:outputField value="{!Item.item[f]}" styleclass="{!Item.Id}-{!f.FieldPath}" rendered="{!!Item.IsEdit && f.FieldPath != 'fuseit_s2t__Attachment_Name__c'  && f.FieldPath != 'Line_Item_Type__c' && f.FieldPath != 'fuseit_s2t__Trim_Status__c'}"/>
+                            <apex:outputText value="{!Item.item[f]}" styleclass="{!Item.Id}-{!f.FieldPath}" rendered="{!!Item.IsEdit && f.FieldPath == 'fuseit_s2t__Trim_Status__c'}"/>
+                            <apex:outputText value="{!Item.item.Line_Item_Type__r.Line_Item_Category__r.Line_Item_Category__c}" styleclass="{!Item.Id}-{!f.FieldPath} {!f.FieldPath}" rendered="{!!Item.IsEdit && f.FieldPath == 'Line_Item_Type__c'}" />
+                            <apex:outputPanel style="white-space:nowrap;" rendered="{!f.FieldPath == 'fuseit_s2t__Attachment_Name__c'}">
+                                <apex:outputPanel style="white-space:nowrap;">
+                                    <apex:inputField value="{!Item.item.fuseit_s2t__Attachment_ID__c}" styleClass="{!Item.Id}-fuseit_s2t__Attachment_ID__c" style="display:none;"/>
+                                    <apex:inputField value="{!Item.item[f]}" styleClass="{!Item.Id}-{!f.FieldPath}" style="display:none;"/>
+                                    <apex:outputText value="{!Item.item[f]}" styleclass="{!Item.Id}_show-{!f.FieldPath}"></apex:outputText>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!Item.IsEdit}">
+                                    <img src="/s.gif" class="lookupIcon" onblur="this.className = 'lookupIcon';" 
+                                        onfocus="this.className = 'lookupIconOn';" 
+                                        onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" 
+                                        onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';"
+                                        onclick="openAttachmentPopup('{!Item.Id}');"
+                                        title="Upload Attachment"/>
+                                </apex:outputPanel>
+                        	</apex:outputPanel>
+                        </apex:column>
+                    </apex:repeat>
+                    
+                    <apex:column >
+                        <apex:facet name="header">
+                            Vouching Status
+                        </apex:facet>
+                        <apex:commandLink value="Vouched" rendered="{!Item.hasVouching && Item.isExist}" onclick="openReviewVouchingStatus('{!Item.item.Id}');return false;"/>
+                        <apex:outputText value="Not Vouched" rendered="{!!Item.hasVouching && Item.isExist}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+                <p>
+                	<c:Pagination pager="{!TRIMRecordPagingInfo}" action="{!QueryTRIMRecords}" rerender="pnlForm" status="overlayStatus" />
+            	</p>
+            </div>
+    	</apex:pageBlock>
+    </apex:form>
+</apex:page>

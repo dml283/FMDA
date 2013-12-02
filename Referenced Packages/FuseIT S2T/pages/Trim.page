@@ -1,0 +1,11 @@
+<apex:page showHeader="true" standardController="fuseit_s2t__Trim__c">
+
+<script language="JavaScript">
+
+function credentialsPage() {
+    document.location.href="{!URLFOR($Page.fuseit_s2t__TrimCredentials)}?default=y&returnId={!fuseit_s2t__Trim__c.Id}"; 
+}
+
+</script>
+<apex:detail />
+</apex:page>

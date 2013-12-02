@@ -1,0 +1,139 @@
+<apex:page standardController="Eligible_Claim_for_Payment__c" tabStyle="Eligible_Claim_for_Payment__c" extensions="EndorsedStakeholdersController" title="Endorsed Stakeholders">
+    
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <style type="text/css">
+        th.headerRow{white-space:normal!important;}
+    </style>
+    
+    <apex:form id="pnlForm"> 
+        <apex:sectionHeader title="Endorsed Stakeholders - {!Entity.Public_Fund__c}" id="header"/>
+        
+        <apex:pageMessages escape="false"></apex:pageMessages>
+        
+        <apex:pageBlock mode="edit">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Back" onclick="top.window.location.href='/{!Entity.Id}';return false;"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        
+        <apex:pageBlock mode="edit" id="RelatedForm" title="Related Endorsed Stakeholders" rendered="{!!isNotRequire}">
+           
+                <apex:outputPanel >
+                    <apex:outputPanel style="float:left;padding:10px;">
+                        <apex:commandButton value="Remove Selected Stakeholders" action="{!btnRemoveEndorsed_OnClick}" status="overlayStatus" rerender="pnlForm"/>
+                        <apex:commandButton value="Confirm Endorsement Selected" action="{!RelatedEndorsedList.btnConfirmEndorsed_OnClick}" status="overlayStatus" rerender="pnlForm"/>
+                        <apex:commandButton value="Unconfirm Endorsement Selected" action="{!RelatedEndorsedList.btnUnconfirmEndorsed_OnClick}" status="overlayStatus" rerender="pnlForm"/>
+                        <apex:commandButton style="background:url('/img/alohaSkin/sync.png') 2px 3px no-repeat;width:22px;height:23px;" action="{!RelatedEndorsedList.Refresh}" status="overlayStatus" rerender="pnlForm"/>
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel styleclass="rolodex" style="float:right;padding:15px 15px;">
+                        <apex:repeat var="item" value="{!FilterKeys}">
+                            <apex:commandLink action="{!RelatedEndorsedList.Refresh}" status="overlayStatus" styleclass="listItem" rerender="pnlForm" >
+                                <span class="{!if(RelatedEndorsedList.FilterKey == item, 'listItemSelected', 'listItemPad')}">{!item}</span>
+                                <apex:param name="filterkeyR" value="{!item}" assignTo="{!RelatedEndorsedList.FilterKey}"/>
+                            </apex:commandLink>
+                        </apex:repeat>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            
+            <apex:pageBlockTable value="{!RelatedEndorsedList.Entities}" var="item">
+                <apex:column >
+                	<apex:facet name="header">
+                        <input type="checkbox" onclick="if(this.checked){$('.ckb-vouchRel').attr('checked', ' checked')} else{$('.ckb-vouchRel').removeAttr('checked')}" />
+                    </apex:facet>
+                    <apex:inputCheckbox value="{!item.IsSelected}" styleclass="ckb-vouchRel"/>
+                </apex:column>
+                <apex:repeat value="{!fieldSets}" var="f" >
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                <apex:commandLink action="{!RelatedEndorsedList.Sort}" rerender="pnlForm" status="overlayStatus"
+                                value="{!f.label} {!IF(RelatedEndorsedList.Pager.OrderBy != f.FieldPath, '', IF(RelatedEndorsedList.Pager.OrderDirection == 'ASC', '▲', '▼'))}">
+                                    <apex:param name="sortByColumn" value="{!f.FieldPath}" />
+                                    <apex:param name="sortDirection" value="{!IF(RelatedEndorsedList.Pager.OrderBy != f.FieldPath, 'ASC', IF(RelatedEndorsedList.Pager.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                </apex:commandLink>
+                           
+                                <apex:outputText rendered="{!$ObjectType.Registration__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Registration__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText> 
+                            </apex:outputPanel>
+                        </apex:facet> 
+                        <apex:outputField value="{!item.Item[f.FieldPath]}" />
+                    </apex:column>
+                </apex:repeat>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                            Confirmed Endorsement
+                            <apex:outputText rendered="{!$ObjectType.Endorsed_Stakeholder__c.Fields['Confirmed_Endorsement__c'].InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Endorsed_Stakeholder__c.Fields['Confirmed_Endorsement__c'].InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText> 
+                        </apex:outputPanel>
+                    </apex:facet> 
+                    <apex:outputPanel rendered="{!item.Confirmed_Endorsement}" >
+                        <img src="/img/checkbox_checked.gif" alt="Checked" width="21" height="16" class="checkImg" title="Checked"/>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!!item.Confirmed_Endorsement}" >
+                        <img src="/img/checkbox_unchecked.gif" alt="Not Checked" width="21" height="16" class="checkImg" title="Not Checked"/>
+                    </apex:outputPanel>
+                </apex:column>
+            </apex:pageBlockTable>
+            
+            <apex:outputPanel rendered="{!RelatedEndorsedList.Entities.Size > 0}" style="padding:1px;">
+                <c:Pagination pager="{!RelatedEndorsedList.Pager}" action="{!RelatedEndorsedList.Query}" rerender="pnlForm" status="overlayStatus" />
+            </apex:outputPanel>
+        </apex:pageBlock>
+        
+        <apex:pageBlock mode="edit" id="UnrelatedForm" title="Unrelated Endorsed Stakeholders" rendered="{!!isNotRequire}">
+            
+            <apex:outputPanel >
+                <apex:outputPanel style="float:left;padding:10px;">
+                    <apex:commandButton value="Add Selected Stakeholders" action="{!btnAddEndorsed_OnClick}" status="overlayStatus" rerender="pnlForm"/>
+                    <apex:commandButton style="background:url('/img/alohaSkin/sync.png') 2px 3px no-repeat;width:22px;height:23px;" action="{!UnRelatedEndorsedList.Refresh}" status="overlayStatus" rerender="pnlForm"/>
+                </apex:outputPanel>
+                
+                <apex:outputPanel styleclass="rolodex" style="float:right;padding:15px 15px;">
+                    <apex:repeat var="item" value="{!FilterKeys}">
+                        <apex:commandLink action="{!UnRelatedEndorsedList.Refresh}" status="overlayStatus" styleclass="listItem" rerender="pnlForm" >
+                            <span class="{!if(UnRelatedEndorsedList.FilterKey == item, 'listItemSelected', 'listItemPad')}">{!item}</span>
+                            <apex:param name="filterkeyU" value="{!item}" assignTo="{!UnRelatedEndorsedList.FilterKey}"/>
+                        </apex:commandLink>
+                    </apex:repeat>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            
+            
+            <apex:pageBlockTable value="{!UnRelatedEndorsedList.Entities}" var="item">
+                <apex:column >
+                	<apex:facet name="header">
+                        <input type="checkbox" onclick="if(this.checked){$('.ckb-vouchUnrel').attr('checked', ' checked')} else{$('.ckb-vouchUnrel').removeAttr('checked')}" />
+                    </apex:facet>
+                    <apex:inputCheckbox value="{!item.IsSelected}" styleclass="ckb-vouchUnrel"/>
+                </apex:column>
+                
+                <apex:repeat value="{!fieldSets}" var="f" >
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                <apex:commandLink action="{!UnRelatedEndorsedList.Sort}" rerender="pnlForm" status="overlayStatus"
+                                value="{!f.label} {!IF(UnRelatedEndorsedList.Pager.OrderBy != f.FieldPath, '', IF(UnRelatedEndorsedList.Pager.OrderDirection == 'ASC', '▲', '▼'))}">
+                                    <apex:param name="sortByColumn" value="{!f.FieldPath}" />
+                                    <apex:param name="sortDirection" value="{!IF(UnRelatedEndorsedList.Pager.OrderBy != f.FieldPath, 'ASC', IF(UnRelatedEndorsedList.Pager.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                </apex:commandLink>
+                                <apex:outputText rendered="{!$ObjectType.Registration__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Registration__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet> 
+                        <apex:outputField value="{!item.Item[f.FieldPath]}" />
+                    </apex:column>
+                </apex:repeat>
+            </apex:pageBlockTable>
+            
+            <apex:outputPanel rendered="{!UnRelatedEndorsedList.Entities.Size > 0}" style="padding:1px;">
+                <c:Pagination pager="{!UnRelatedEndorsedList.Pager}" action="{!UnRelatedEndorsedList.Query}" rerender="pnlForm" status="overlayStatus" />
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

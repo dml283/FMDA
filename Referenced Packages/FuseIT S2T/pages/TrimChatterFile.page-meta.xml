@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>25.0</apiVersion>
+    <description>Visualforce page allows New and existing Trim Records to be created and modified so that the associated Salesforce Chatter Files will be synchronized with Trim</description>
+    <label>TrimChatterFile</label>
+</ApexPage>

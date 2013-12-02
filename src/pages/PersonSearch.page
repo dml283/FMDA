@@ -1,0 +1,227 @@
+<apex:page controller="PersonSearchController" showHeader="false" sideBar="false">
+    <c:CommonScripts ></c:CommonScripts>
+    <c:PersonSearchScripts electoralWebServiceURL="{!electoralWebServiceURL}"/>
+    <script>
+    $(function(){
+        {!StartUpScript}
+        $('.Electoral').each(function( index ) {
+            var val = $(this).text().replace("Electoral Roll", "").trim();
+            $(this).text(val);
+        });
+    });
+    
+    function fillAndClose(fid,id,name){
+        //top.window.close();
+        top.window.opener.pickCustomLookup(fid,id,name); 
+        top.window.close();
+    }
+    
+    $(document).keypress(function(e) {
+        if(e.which == 13) {
+            //isFADMS = true
+            if ($('#hiddenSearchType').val() == "true") {
+                SearchFADMSJS();
+            } else {
+                invokeWebSvc();
+            }
+            e.preventDefault(); 
+        }
+    });
+    
+    </script>
+    <body class="hasMotif lookupTab  LookupSearchFrame  brandNoBgrImg">
+        <div class="lookup">
+            <div class="bPageTitle">
+                <div class="ptBody secondaryPalette">
+                    <div class="content"><img title="" class="pageTitleIcon" alt="" src="/s.gif"/>
+                        <h1>Lookup</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="pBody">
+            </div>
+        </div>
+        
+        <c:Overlay ></c:Overlay>
+        <apex:outputPanel id="pnlRefreshOnce">
+            <script>
+            $(function(){
+                if({!!IsFADMS}){
+                    invokeWebSvc();
+                }
+            })
+                </script>
+        </apex:outputPanel>
+        <apex:form id="pnlForm">
+            <apex:messages /> 
+            <apex:actionRegion >
+                <apex:pageBlock title="{!if(!!isFADMS, 'Stakeholder (Person) FADMS Search', 'Stakeholder (Person) Electoral Roll Search')}" mode="edit" id="SearchInfo">
+                    <apex:pageBlockButtons location="top">
+                        <apex:commandButton value="Back" onclick="top.window.location.href='/apex/stakeholdersearchselect{!QueryString}'; return false;" rendered="{!IsFADMS && $CurrentPage.Parameters.Redirected == '1'}"/>
+                        <apex:commandButton value="Back" immediate="true" action="{!SwitchSearchType}" rendered="{!!IsFADMS && !IsFadmsSkip}" status="overlayStatus"/>
+                        <apex:commandButton value="Search FADMS" action="{!SearchFADMS}" rendered="{!isFADMS}" status="overlayStatus" rerender="pnlForm"/>
+                        <apex:commandButton value="Search Electoral Roll"  onclick="invokeWebSvc();return false;" rendered="{!!isFADMS}" status="overlayStatus" rerender="pnlForm"/>
+                        <apex:commandButton value="Clear" action="{!Clear}" status="overlayStatus" rerender="pnlForm" immediate="true" rendered="{!isFADMS}"/>
+                        <apex:commandButton value="Cancel" onclick="top.window.close(); return false;" />
+                        </apex:pageBlockButtons>
+                    <input type="hidden" value="{!isFADMS}" id="hiddenSearchType"/>
+                    <apex:actionFunction name="SearchFADMSJS" action="{!SearchFADMS}" status="overlayStatus" rerender="pnlForm"/>
+                    <apex:actionFunction name="notOnElectoralRoll" action="{!NotOnElectoralRoll}" />
+                    <apex:pageBlockSection title="Stakeholder Details" columns="3" rendered="{!isFADMS}">
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.Salutation.InlineHelpText}">
+                            <apex:outputLabel value="Title" />
+                            <apex:outputPanel >
+                                <apex:inputField value="{!PersonContact.Salutation}" />
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonBirthdate.InlineHelpText}">
+                            <apex:outputLabel value="Date of Birth " />
+                            <apex:outputPanel style="white-space:nowrap">
+                                <apex:inputField value="{!Account.PersonBirthdate}" onclick="setDateRange('birthday');"/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingStreet.InlineHelpText}">
+                            <apex:outputLabel value="Street" />
+                            <apex:inputField value="{!Account.PersonMailingStreet}" />
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.FirstName.InlineHelpText}">
+                            <apex:outputLabel value="Given Name(s)" />
+                            <apex:outputPanel style="white-space:nowrap">
+                                <apex:inputField value="{!PersonContact.FirstName}" />
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.FADMS_Elector_ID__c.InlineHelpText}">
+                            <apex:outputLabel value="FADMS Elector ID" />
+                            <apex:outputPanel style="white-space:nowrap">
+                                <apex:inputField value="{!Account.FADMS_Elector_ID__c}" />
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingCity.InlineHelpText}">
+                            <apex:outputLabel value="Locality" />
+                            <apex:inputField value="{!Account.PersonMailingCity}" />
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.LastName.InlineHelpText}">
+                            <apex:outputLabel value="Surname" />
+                            <apex:inputField value="{!PersonContact.LastName}" required="true"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingPostalCode.InlineHelpText}">
+                            <apex:outputLabel value="Postcode" />
+                            <apex:inputField value="{!Account.PersonMailingPostalCode}" />
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                    
+                    
+                    <apex:pageBlockSection title="Stakeholder Details" columns="3" rendered="{!!isFADMS}">
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="Electoral Roll" />
+                            <apex:outputPanel >
+                                <apex:selectList value="{!ElectoralType}" size="1" styleClass="rollSearchType">
+                                    <apex:selectOptions value="{!ElectoralTypeOptions}"/>
+                                </apex:selectList>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonBirthdate.InlineHelpText}">
+                            <apex:outputLabel value="Date of Birth " />
+                            <apex:outputPanel style="white-space:nowrap">
+                                <apex:inputField value="{!AccountElectoral.PersonBirthdate}" styleClass="searchDob" onclick="setDateRange('birthday');"/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingStreet.InlineHelpText}">
+                            <apex:outputLabel value="Street" />
+                            <apex:inputField value="{!AccountElectoral.PersonMailingStreet}" styleClass="searchStreetName"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.FirstName.InlineHelpText}">
+                            <apex:outputLabel value="Given Name(s)" />
+                            <apex:outputPanel style="white-space:nowrap">
+                                <apex:inputField value="{!PersonContactElectoral.FirstName}" styleClass="searchGivenName"/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.FADMS_Elector_ID__c.InlineHelpText}">
+                            <apex:outputLabel value="FADMS Elector ID" />
+                            <apex:outputPanel style="white-space:nowrap">
+                                <apex:inputField value="{!AccountElectoral.FADMS_Elector_ID__c}" styleclass="searchFadmsElectorId"/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingCity.InlineHelpText}">
+                            <apex:outputLabel value="Locality" />
+                            <apex:inputField value="{!AccountElectoral.PersonMailingCity}" styleClass="searchLocality"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.LastName.InlineHelpText}">
+                            <apex:outputLabel value="Surname" />
+                            <apex:outputPanel style="white-space:nowrap">
+                                <apex:inputField value="{!PersonContactElectoral.LastName}" required="true" styleClass="searchFamilyName"/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helptext="{!$ObjectType.Account.Fields.PersonMailingPostalCode.InlineHelpText}">
+                            <apex:outputLabel value="Postcode" />
+                            <apex:outputPanel style="white-space:nowrap">
+                                <apex:inputField value="{!AccountElectoral.PersonMailingPostalCode}" styleClass="searchPostCode"/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+            </apex:actionRegion>
+            
+            <apex:actionRegion >
+                <apex:pageBlock mode="edit" id="SearchResults" title="Search Results" rendered="{!IsFADMS}">
+                    <apex:pageBlockSection >
+                        <apex:outputPanel rendered="{!NoMatches}">
+                            <p>
+                                No records found due to one of the following:
+                                <ul>
+                                    <li>There are no records of this type</li>
+                                    <li>You don't have permission to see any of the records</li>
+                                </ul>
+                            </p>
+                            <p>
+                                <apex:commandButton value="Electoral Roll Search" action="{!SwitchSearchType}" status="overlayStatus"  rerender="pnlForm,pnlRefreshOnce" rendered="{!EventId == null}"/>
+                            </p>
+                        </apex:outputPanel>
+                    </apex:pageBlockSection>
+                    <apex:outputPanel rendered="{!!NoMatches}" id="pnl-results">
+                        <apex:pageBlockTable value="{!Accounts}" var="item" >
+                            <apex:repeat var="f" value="{!$ObjectType.Account.FieldSets.Person}">
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:outputPanel >
+                                            <apex:commandLink value="{!f.Label} {!IF(SortExpressions[f.FieldPath] == 'null', '', IF(SortExpressions[f.FieldPath] == 'ASC', '▲', '▼'))}"
+                                            action="{!Sort}" status="overlayStatus" rerender="SearchResults" styleClass="{!f.Label}">
+                                                <apex:param name="AccountSortingInfo" value="{!f.FieldPath}" />
+                                            </apex:commandLink>
+                                            <apex:outputText rendered="{!$ObjectType.Account.Fields[f.FieldPath].InlineHelpText != null}">
+                                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Account.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                            </apex:outputText>
+                                        </apex:outputPanel>
+                                    </apex:facet>
+                                    <apex:commandLink value="{!item[f.FieldPath]}" action="{!FillElectoralSearchParam}" rendered="{!(f.FieldPath == 'FirstName' || f.FieldPath == 'LastName') && EventId == NULL }" 
+                                    status="overlayStatus" rerender="pnlForm,pnlRefreshOnce" > 
+                                        <apex:param name="accountIdToFill" value="{!item.Id}" />
+                                    </apex:commandLink>
+                                    <apex:commandLink value="{!item[f.FieldPath]}" onclick="fillAndClose('{!fId}','{!item.Id}','{!item.FirstName + ' ' + item.LastName}')" rendered="{!(f.FieldPath == 'FirstName' || f.FieldPath == 'LastName') && EventId != NULL}">                                      
+                                    </apex:commandLink>
+                                    <apex:outputField value="{!item[f.FieldPath]}" rendered="{!f.FieldPath != 'FirstName' && f.FieldPath != 'LastName'}" />
+                                </apex:column>
+                            </apex:repeat>
+                        </apex:pageBlockTable>
+                        <p>
+                            <c:Pagination pager="{!AccountPagingInfo}" action="{!SearchFADMS}" rerender="pnl-results" status="overlayStatus"/>
+                        </p>
+                    </apex:outputPanel>
+                </apex:pageBlock>
+            </apex:actionRegion>
+            
+            <apex:actionFunction action="{!SelectElectoralRoll}" name="electoralRollOnSelect"/>
+            <apex:inputText style="display:none" value="{!JsonElectoralRoll}" styleclass="hdn-JsonElectoralRoll"/>
+            <apex:pageBlock title="Search Results" mode="edit" id="SearchResultsElectoral" rendered="{!!isFADMS}">
+                <div id="rsltMessage" style="margin:10px;color:red"></div>
+                <div id="electorTableData"></div>
+                <div style="clear:both;height:3px;" ></div>
+            </apex:pageBlock>
+        </apex:form>
+        <div id="temp-overlay" class="overlay" style="display:none"></div>
+    </body>
+</apex:page>

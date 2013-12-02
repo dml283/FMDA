@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>25.0</apiVersion>
+    <description>Visualforce page that allows this object types layout to be saved as a PDF snapshot ready for synchronization to TRIM. This page can be modified to add or remove layout items you wish to be snapshot as a PDF.</description>
+    <label>TrimPDFLead</label>
+</ApexPage>

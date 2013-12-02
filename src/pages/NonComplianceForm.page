@@ -1,0 +1,187 @@
+<apex:page controller="NonComplianceFormController" title="Non-Compliance List" tabStyle="Task">
+    <script>
+    	function openComplianceSearch(itemId,recordTypeName,lineItemType,fromPage) {
+            var keyword = $('.' + itemId + '_show-Subject').text();
+            var url = '/apex/NonComplianceSearch?isdtp=vw&keyword=' + keyword + '&recordTypeName=' + recordTypeName +'&itemIdParam=' + itemId
+                if(lineItemType != ''){
+                    url += '&litId=' + lineItemType;
+                }
+            	if(fromPage != ''){
+                    url += '&fromPage=' + fromPage;
+                }
+            window.open(url, '_blank' , 'width=1200,height=600,scrollbars=1,center=1');
+        }
+        function getURLParameter(name) {
+          	return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null
+        }
+    	function ReloadSection(itemId,jsonObj) {
+            // alert(JSON.stringify(jsonObj)); 
+            $('.' + itemId + '-Non_Compliance_Id__c').val(jsonObj['Id']);
+            $('.' + itemId + '-Non_Compliance_Number__c').val(jsonObj['Non_Compliance_Number__c']);
+            $('.' + itemId + '_show-Non_Compliance_Number__c').text(jsonObj['Non_Compliance_Number__c']);
+            $('.' + itemId + '-Line_Item_Aggregated_Categories__c').val(jsonObj['Line_Item_Aggregated_Categories__c']);
+            $('.' + itemId + '_show-Line_Item_Aggregated_Categories__c').text(jsonObj['Line_Item_Aggregated_Categories__c']);
+            $('.aggregatedCategories').val(jsonObj['Line_Item_Aggregated_Categories__c']);
+            $('.' + itemId + '-Line_Item_Category_Id__c').val(jsonObj['Line_Item_Category__c']);
+            $('.' + itemId + '-Subject').val(jsonObj['Name']);
+            $('.' + itemId + '_show-Subject').text(jsonObj['Name']);
+            $('.' + itemId + '-Legislative_Reference__c').val(jsonObj['Legislative_Reference__c']);
+            $('.' + itemId + '_show-Legislative_Reference__c').text(jsonObj['Legislative_Reference__c']);
+            $('.' + itemId + '-Compliance_Issue__c').val(jsonObj['Compliance_Issue__c']);
+            $('.' + itemId + '_show-Compliance_Issue__c').text(jsonObj['Compliance_Issue__c']);
+            $('.' + itemId + '-Offence_Reference__c').val(jsonObj['Offence_Reference__c']);
+            $('.' + itemId + '_show-Offence_Reference__c').text(jsonObj['Offence_Reference__c']);
+            $('.' + itemId + '-Penalty_Notice_Penalty__c').val(jsonObj['Penalty_Notice_Penalty__c']);
+            $('.' + itemId + '_show-Penalty_Notice_Penalty__c').text(jsonObj['Penalty_Notice_Penalty__c']);
+            $('.' + itemId + '-Outcome__c').val(jsonObj['Outcome__c']);
+            $('.' + itemId + '_show-Outcome__c').text(jsonObj['Outcome__c']);
+            $('.' + itemId + '-Type').val('{!recordTypeName}');
+            $('.' + itemId + '_show-Type').text('{!recordTypeName}');
+            $('.' + itemId + '-Description').val(jsonObj['Comments__c']);
+            $('.' + itemId + '_show-Description').text(jsonObj['Comments__c']);
+            //$('.' + itemId + '-Offender__c').val(jsonObj['Offender__c']);
+            $('.' + itemId + '_show-Offender__c').text(jsonObj['Offender__c']);
+            $('.offender').val(jsonObj['Offender__c']);
+        }
+        function closeIt(){
+            opener.reloadit('','{!whatId}');
+            // alert(top.window.opener.URL);
+            //window.opener.reload();
+            //top.window.opener.reload();
+            //return null;
+            //alert(getURLParameter('retURL'));
+            //window.location.href = getURLParameter('retURL');
+        }
+    	window.onbeforeunload = function(){
+            opener.reloadit('','{!whatId}');
+                top.window.opener.location.href = top.window.opener.location.href;
+            //return null;
+        };
+    /*$(function(){
+            onAjaxStop();
+        }
+		function onAjaxStop(){
+            $('input[class*=_Name]').each(function(){
+                $this.attr("disabled","disabled");
+            });
+}*/
+    </script>
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <style type="text/css">
+        .headerRow th{white-space:normal!important}
+        .apexp{float:left;}
+    </style>
+    
+    <apex:form id="pnlForm" >
+        <apex:sectionHeader title="Non-Compliance List" />
+        <apex:outputPanel id="pnlPageMessages">    
+            <apex:pageMessages escape="false" />
+        </apex:outputPanel>
+        
+        <apex:actionFunction name="Sort" action="{!Sort}" rerender="pnlForm" status="overlayStatus">
+            <apex:param name="sortByColumn" value="" assignTo="{!ItemPagingInfo.OrderBy}"/>
+            <apex:param name="sortDirection" value="" assignTo="{!ItemPagingInfo.OrderDirection}"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="Display" action="{!buildItemWrapper}" rerender="pnlForm" status="overlayStatus"/>
+        <apex:pageBlock title="Non-Compliance List" mode="edit">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Add Non-Compliance" action="{!btnAddRow_Click}" rerender="pnlForm" status="overlayStatus" />
+                <apex:commandButton value="Close" onclick="top.window.close(); return false;" />
+            </apex:pageBlockButtons>
+                
+            <apex:actionRegion >
+                <apex:outputPanel > 
+                    Record per page&nbsp;&nbsp;
+                    <apex:selectList label="Record per page " size="1" value="{!ItemPagingInfo.PageSize}" onchange="Display();">
+                        <apex:selectOptions value="{!numberItemPerPageOptions}"/>
+                    </apex:selectList>
+                </apex:outputPanel>
+                <br/><br/>
+            <apex:outputPanel >
+                <apex:pageBlockTable value="{!ItemWrapperList}" var="item" >
+                    <apex:column >
+                        <apex:outputPanel rendered="{!item.isEdit}" style="white-space:nowrap" >
+                            <apex:commandLink action="{!btnSaveRow_Click}" value="Save" status="overlayStatus" rerender="pnlForm">
+                                <apex:param name="editId" value="{!item.Id}"/>
+                            </apex:commandLink>
+                            &nbsp;
+                            <apex:commandLink action="{!btnCancelRow_Click}" immediate="true" value="Cancel" status="overlayStatus" rerender="pnlForm">
+                                <apex:param name="editId" value="{!item.Id}"/>
+                            </apex:commandLink>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!!item.isEdit}" style="white-space:nowrap" >
+                            <apex:commandLink action="{!btnEditRow_Click}" value="Edit" status="overlayStatus" rerender="pnlForm">
+                                <apex:param name="editId" value="{!item.Id}"/>
+                            </apex:commandLink>
+                            &nbsp;
+                            <apex:commandLink action="{!btnDelRow_Click}" value="Del" status="overlayStatus" rerender="pnlForm">
+                                <apex:param name="editId" value="{!item.Id}"/>
+                            </apex:commandLink>
+                        </apex:outputPanel>
+                    </apex:column>
+                    
+                    <apex:repeat var="f" value="{!AllTaskFieldSet['Non_Compliance'].Fields}">
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputPanel >
+                                    <apex:commandLink value="{!f.label} {!IF(ItemPagingInfo.OrderBy != f.FieldPath, '', IF(ItemPagingInfo.OrderDirection == 'ASC', '▲', '▼'))}" status="overlayStatus" rerender="pnlForm"
+                                    	onClick="Sort('{!f.FieldPath}','{!IF(ItemPagingInfo.OrderBy != f.FieldPath, 'ASC', IF(ItemPagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}');return false;"
+                                    	rendered="{!f.FieldPath != 'Offender__c' && f.FieldPath != 'Description' && f.FieldPath != 'Line_Item_Aggregated_Categories__c'}">
+                                    </apex:commandLink>
+                                    <apex:outputText value="{!f.label}" rendered="{!f.FieldPath == 'Offender__c' || f.FieldPath == 'Description' || f.FieldPath == 'Line_Item_Aggregated_Categories__c'}"/>
+                                    <apex:outputText rendered="{!$ObjectType.Task.Fields[f.FieldPath].InlineHelpText != null}">
+                                        <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Task.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                    </apex:outputText>
+                                </apex:outputPanel>
+                            </apex:facet>
+                            <apex:outputPanel rendered="{!f.FieldPath == 'Line_Item_Category__c' || f.FieldPath == 'Status'
+                            							|| f.FieldPath == 'Priority' || f.FieldPath == 'CreatedDate'
+                            							|| f.FieldPath == 'ActivityDate' || f.FieldPath == 'Description'}">
+                                <apex:outputField value="{!item.item[f.FieldPath]}" rendered="{!!item.isEdit || f.FieldPath == 'Line_Item_Category__c' 
+                                                            || f.FieldPath == 'CreatedDate'}" styleClass="{!item.Id}-{!f.FieldPath}"/>
+                                                            
+                                <apex:inputField value="{!item.item[f.FieldPath]}" rendered="{!NOT(!item.isEdit || f.FieldPath == 'Line_Item_Category__c' 
+                                                            || f.FieldPath == 'ActivityDate' || f.FieldPath == 'CreatedDate')}" styleClass="{!item.Id}-{!f.FieldPath}"/>
+                                                            
+                                <!--<apex:outputField value="{!item.item[f.FieldPath]}" rendered="{!!item.isEdit && f.FieldPath == 'ActivityDate' && !item.hasdueDate}" styleClass="{!item.Id}-{!f.FieldPath}"/>-->
+                                <apex:inputField value="{!item.item[f.FieldPath]}" rendered="{!item.isEdit && f.FieldPath == 'ActivityDate' && item.hasdueDate}" styleClass="{!item.Id}-{!f.FieldPath}"/>
+                            </apex:outputPanel>
+                            
+                            <apex:outputPanel rendered="{! f.FieldPath != 'Line_Item_Category__c' && f.FieldPath != 'Status'
+                            							&& f.FieldPath != 'Priority' && f.FieldPath != 'CreatedDate' && f.FieldPath != 'ActivityDate' 
+                            							&& f.FieldPath != 'Description' && f.FieldPath != 'Subject' }">
+                                <apex:inputField rendered="{! f.FieldPath != 'Offender__c' && f.FieldPath != 'Line_Item_Aggregated_Categories__c'}" value="{!item.item[f.FieldPath]}" styleClass="{!item.Id}-{!f.FieldPath}" style="display:none;"/>
+                                <apex:outputText value="{!item.item[f.FieldPath]}" styleClass="{!item.Id}_show-{!f.FieldPath}"/>         
+                            </apex:outputPanel>
+                            <apex:inputText value="{!offender}" styleclass="offender" style="display:none;"/>
+                            <apex:inputText value="{!aggregatedCategories}" styleclass="aggregatedCategories" style="display:none;"/>
+                            
+                            <apex:outputPanel rendered="{!f.FieldPath == 'Subject'}" >
+                                <apex:outputPanel >
+                                    <apex:inputField value="{!Item.item['Non_Compliance_Id__c']}" styleClass="{!Item.Id}-Non_Compliance_Id__c" style="display:none;"/>
+                                    <!--<apex:inputField value="{!Item.item['Non_Compliance_Number__c']}" styleClass="{!Item.Id}-Non_Compliance_Number__c" style="display:none;"/>-->
+                                    <apex:inputField value="{!Item.item['Line_Item_Category_Id__c']}" styleClass="{!Item.Id}-Line_Item_Category_Id__c" style="display:none;"/>
+                                    <apex:inputField value="{!Item.item[f.FieldPath]}" styleClass="{!Item.Id}-{!f.FieldPath}" style="display:none;"/>
+                                    <apex:outputText value="{!Item.item[f.FieldPath]}" styleclass="{!Item.Id}_show-{!f.FieldPath}"></apex:outputText>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!Item.IsEdit}">
+                                    <img src="/s.gif" class="lookupIcon" onblur="this.className = 'lookupIcon';" 
+                                        onfocus="this.className = 'lookupIconOn';" 
+                                        onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" 
+                                        onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';"
+                                        onclick="openComplianceSearch('{!item.Id}','{!recordTypeName}','{!LineItemType}','{!fromPage}');"
+                                    	title="Non-Compliance Lookup"/>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:column>
+                    </apex:repeat>
+                </apex:pageBlockTable>
+                <p>
+                    <c:Pagination pager="{!ItemPagingInfo}" action="{!buildItemWrapper}" rerender="pnlForm" status="overlayStatus"/>
+                </p>
+            </apex:outputPanel>
+           </apex:actionRegion>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

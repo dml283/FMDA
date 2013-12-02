@@ -1,0 +1,185 @@
+<apex:page standardcontroller="Disclosure_Claim_for_Payment__c" 
+tabstyle="Donation_Expenditure_Cap__c" 
+extensions="ReviewDonationCapController">
+    
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <style type="text/css">
+        div.pbs{padding:10px 0 0 0;}
+        th.headerRow{white-space:normal!important;}
+    </style>
+    <script>
+    $(function(){onAjaxStop();})
+    var lastSectionId = '';
+    function onAjaxStop(){
+        if(lastSectionId == '' || document.getElementById(lastSectionId) == null){
+        	lastSectionId = $('.pbSubheader img').first().parent().parent().attr('id');
+        }
+        $('.pbSubheader img').click(function(e){
+            if($(this).hasClass('showListButton')){
+                lastSectionId = $(this).parent().parent().attr('id');
+                $('img.hideListButton').not($(this)).click();
+            }
+        });
+        //select last opened tab
+        $('img.hideListButton').click();
+        $(document.getElementById(lastSectionId)).find('.pbSubheader img').click();
+        
+        if($('.pbSubheader').length == 0){
+            $('#pnlMessage').html('No Reportable Donations Received');
+        }
+    }
+    </script>
+    <apex:form id="pnlForm"> 
+        <script>
+        </script>
+        <apex:actionFunction name="ReloadLitTable" action="{!ReloadLitTable}" rerender="pnlForm" status="overlayStatus">
+            <apex:param name="stakeholderId" value=""/>
+            <apex:param name="lineItemTypeId" value=""/>
+        </apex:actionFunction>
+        
+        <apex:sectionHeader title="Review Donation Cap" id="header"/>
+        
+        <apex:pageMessages escape="false"></apex:pageMessages>
+        
+        <div style="text-align:center" class="pbs">
+            <apex:commandButton value="Back" action="{!Cancel}"/>
+        </div>
+        <div class="pbs">
+            <apex:inputText value="{!SearchKey}" />
+            
+            <apex:commandButton value="Search" action="{!lnkSearch_OnClick}" status="overlayStatus" rerender="pnlForm"/>
+            
+            <span class="rolodex">
+                <apex:repeat var="item" value="{!FilterKeys}">
+                    <apex:commandLink action="{!lnkSearch_OnClick}" status="overlayStatus" styleclass="listItem" rerender="pnlForm" rendered="{!FilterKey != item}">
+                        <span class="listItemPad">{!item}</span>
+                        <apex:param name="filterkey" value="{!item}" assignTo="{!FilterKey}"/>
+                    </apex:commandLink>
+                    <apex:outputText value="{!item}" styleclass="listItemSelected" rendered="{!FilterKey == item}"/>
+                </apex:repeat>
+            </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="rolodex">
+                <apex:commandLink action="{!lnkCapType_OnClick}" status="overlayStatus" styleclass="listItem listItemFirst" rerender="pnlForm">
+                    <span class="{!if(CapType == 'Within Cap' , 'listItemSelected', 'listItemPad')}">Within Cap</span>
+                    <apex:param name="capType" value="Within Cap" assignTo="{!CapType}"/>
+                </apex:commandLink>
+                <apex:commandLink action="{!lnkCapType_OnClick}" status="overlayStatus" styleclass="listItem listItemLast" rerender="pnlForm">
+                    <span class="{!if(CapType == 'Exceeded Cap' , 'listItemSelected', 'listItemPad')}">Exceeded Cap</span>
+                    <apex:param name="capType" value="Exceeded Cap" assignTo="{!CapType}"/>
+                </apex:commandLink>
+            </span>
+        </div>
+        <br/>
+        
+        <apex:pageBlock title="Search Results" rendered="{!Results.Size > 0}">
+            <div class="pbs" id="pnlMessage"></div>
+            <apex:repeat var="acc" value="{!Results}">
+                <apex:pageBlockSection title="{!acc.Item.Name}" columns="1" rendered="{!CapType=='' /*|| acc.Difference == 0*/ || (CapType==acc.CapType)}">
+                    
+                    <apex:outputText >
+                        <div style="text-align:center" class="pbs">
+                            <apex:commandButton value="Non-Compliance" onclick="openNonCompliancePage('{!Entity.Id}','{!RecordTypeName}','','Donation');return false;"/>
+                        </div>
+                        <div class="pbs">
+                            <table border="0" cellspacing="0" cellpadding="5" width="100%">
+                                <tr>
+                                    <td style="font-weight:bold; text-align:right;">Donation Cap</td>
+                                    <td><apex:outputField value="{!Disclosure_Claim_for_Payment__c.Disclosure_Obligation__r.Donations_Received_Cap__r.Name}"/></td>
+                                    
+                                    <td style="font-weight:bold; text-align:right;">Cap Amount</td>
+                                    <td>
+                                        <apex:outputText value="{0, number, $#,##0}">
+                                            <apex:param value="{!Disclosure_Claim_for_Payment__c.Disclosure_Obligation__r.Donations_Received_Cap__r.Amount__c}" />
+                                        </apex:outputText>
+                                    </td>
+                                    
+                                    <td style="font-weight:bold; text-align:right;">Total Donations</td>
+                                    <td>
+                                        <apex:outputText value="{0, number, $#,##0}">
+                                            <apex:param value="{!acc.TotalDonations}" />
+                                        </apex:outputText>
+                                    </td>
+                                    
+                                    <td style="font-weight:bold; text-align:right;">Difference</td>
+                                    <td>
+                                        <apex:outputText value="{0, number, $#,##0}" style="color:{!if(acc.Difference <= 0, 'green', if(acc.Difference > 0, 'red', 'black'))}">
+                                            <apex:param value="{!acc.Difference}" />
+                                        </apex:outputText>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <apex:repeat var="lit" value="{!acc.LineItemTypes}">
+                            <div class="pbSubheader brandTertiaryBgr tertiaryPalette" style="background:#ddd; color:#555">
+                                <h3>{!lit.Item.Line_Item_Category__r.Description__c}</h3>
+                            </div>   
+                            <div>
+                                <div class="pbs">
+                                    {!Labels[lit.Item.Line_Item_Category__r.Reference_Number__c].Content__c}
+                                </div>
+                                <div class="pbs">
+                                    <apex:pageBlockSection columns="2">
+                                        <apex:outputField value="{!lit.Item.Nil_Disclosure_Claim_for_Payment__c}" />
+                                        
+                                        <apex:pageBlockSectionItem >
+                                            <apex:outputText >Record per page</apex:outputText>
+                                            <apex:outputPanel rendered="{!lit.LiPagingInfo.TotalCount > 0}">
+                                                
+                                                <apex:selectList label="Record per page " size="1" value="{!lit.LiPagingInfo.PageSize}" onchange="ReloadLitTable('{!lit.StakeholderId}','{!lit.Item.Id}');">
+                                                    <apex:selectOptions value="{!ListPageSize}"/>
+                                                </apex:selectList>
+                                            </apex:outputPanel>
+                                        </apex:pageBlockSectionItem>
+                                    </apex:pageBlockSection>
+                                </div>
+                                <div id="{!lit.Item.Id}" class="pbs">
+                                    <apex:pageBlockTable var="li" value="{!lit.LineItems}">
+                                        <apex:repeat var="f" value="{!MapLineItemFieldSets['Reconcile_Donations_Received'].Fields}">
+                                            <apex:column >
+                                                <apex:facet name="header">
+                                                    <apex:outputPanel >
+                                                        <apex:commandLink action="{!lit.Sort}" rerender="pnlForm" status="overlayStatus"
+                                                        value="{!f.label} {!IF(lit.LiPagingInfo.OrderBy != f.FieldPath, '', IF(lit.LiPagingInfo.OrderDirection == 'ASC', '▲', '▼'))}">
+                                                            <apex:param name="sortByColumn" value="{!f.FieldPath}" />
+                                                            <apex:param name="sortDirection" value="{!IF(lit.LiPagingInfo.OrderBy != f.FieldPath, 'ASC', IF(lit.LiPagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                                        </apex:commandLink>
+                                                        <apex:outputText rendered="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                                            <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Line_Item__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                                        </apex:outputText>
+                                                    </apex:outputPanel>
+                                                </apex:facet> 
+                                                <apex:outputField value="{!li.Item[f]}" styleclass="f-{!f.FieldPath}" />
+                                            </apex:column>
+                                        </apex:repeat>
+                                    </apex:pageBlockTable> 
+                                </div>
+                                <div class="pbs">
+                                	<c:Pagination pager="{!lit.LiPagingInfo}" action="{!lit.QueryLineItems}" rerender="pnlForm" status="overlayStatus" />
+                                </div>
+                                <div class="pbs">
+                                    <table border="0" cellspacing="0" cellpadding="5" width="100%">
+                                        <tr>
+                                            <td style="font-weight:bold; text-align:right;">Calculated Count</td>
+                                            <td><apex:outputText value="{!lit.LiPagingInfo.TotalCount}"/></td>
+                                            
+                                            <td style="font-weight:bold; text-align:right;">Calculated Amount</td>
+                                            <td>
+                                                <apex:outputText value="{0, number, $#,##0}">
+                                                    <apex:param value="{!lit.CalculatedAmount}" />
+                                                </apex:outputText>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </apex:repeat>
+                        
+                    </apex:outputText>
+                </apex:pageBlockSection>
+            </apex:repeat>
+        </apex:pageBlock>
+        
+    </apex:form>
+</apex:page>

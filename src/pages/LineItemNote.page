@@ -1,0 +1,134 @@
+<apex:page controller="LineItemNoteController" title="ViewLineItemNotes">
+    <script>
+    
+        function getURLParameter(name) {
+          	return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||null
+        }
+        function closeIt(){
+            opener.reloadit('{!litId}','{!LineItemId}');
+            // alert(top.window.opener.URL);
+            //window.opener.reload();
+            //top.window.opener.reload();
+            //return null;
+            //alert(getURLParameter('retURL'));
+            //window.location.href = getURLParameter('retURL');
+        }
+    window.onbeforeunload = function(){
+        opener.reloadit('{!litId}','{!LineItemId}');
+        	top.window.opener.location.href = top.window.opener.location.href;
+        //return null;
+        };
+	
+    </script>
+    <c:CommonScripts ></c:CommonScripts>
+    <c:Overlay ></c:Overlay>
+    <style type="text/css">
+        .headerRow th{white-space:normal!important}
+    </style>
+    
+    <apex:form id="pnlForm" >
+        <apex:outputPanel id="pnlPageMessages">    
+            <apex:pageMessages escape="false" />
+        </apex:outputPanel>
+        
+        <apex:actionFunction name="Display" action="{!buildNoteWrapper}" rerender="pnlForm" status="overlayStatus"/>
+        <apex:pageBlock title="View Line Item Notes" mode="edit">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Add Note" action="{!btnAddRow_Click}" rerender="pnlForm" status="overlayStatus" />
+                <apex:commandButton value="Close" onclick="top.window.close(); return false;" />
+            </apex:pageBlockButtons>
+            <apex:outputPanel > 
+                Record per page&nbsp;&nbsp;
+                <apex:selectList label="Record per page " size="1" value="{!NotePagingInfo.PageSize}" onchange="Display();">
+                    <apex:selectOptions value="{!numberItemPerPageOptions}"/>
+                </apex:selectList>
+            </apex:outputPanel>
+            <apex:outputPanel >
+                <apex:pageBlockTable value="{!NoteWrapperList}" var="item" >
+                    <apex:column >
+                        <apex:outputPanel rendered="{!item.isEdit}" style="white-space:nowrap" >
+                            <apex:commandLink action="{!btnSaveRow_Click}" value="Save" status="overlayStatus" rerender="pnlForm">
+                                <apex:param name="saveId" value="{!item.Id}"/>
+                            </apex:commandLink>
+                            &nbsp;
+                            <apex:commandLink action="{!btnCancelRow_Click}" value="Cancel" status="overlayStatus" rerender="pnlForm">
+                                <apex:param name="cancelId" value="{!item.Id}"/>
+                            </apex:commandLink>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!!item.isEdit}" style="white-space:nowrap" >
+                            <apex:commandLink action="{!btnEditRow_Click}" value="Edit" status="overlayStatus" rerender="pnlForm">
+                                <apex:param name="editId" value="{!item.Id}"/>
+                            </apex:commandLink>
+                            &nbsp;
+                            <apex:commandLink action="{!btnDelRow_Click}" value="Del" status="overlayStatus" rerender="pnlForm">
+                                <apex:param name="delId" value="{!item.Id}"/>
+                            </apex:commandLink>
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                <apex:commandLink action="{!Sort}" value="Title {!IF(NotePagingInfo.OrderBy != 'Title', '', IF(NotePagingInfo.OrderDirection == 'ASC', '▲', '▼'))}" reRender="pnlForm" status="overlayStatus">
+                                    <apex:param name="orderBy" value="Title"/>
+                                    <apex:param name="orderDirection" value="{!IF(NotePagingInfo.OrderBy != 'Title', 'ASC', IF(NotePagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                </apex:commandLink>
+                                <apex:outputText rendered="{!$ObjectType.Note.Fields.Title.InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Note.Fields.Title.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:inputField value="{!item.note.Title}" rendered="{!item.isEdit}" required="false"/>
+                        <apex:outputField value="{!item.note.Title}" rendered="{!!item.isEdit}"/>
+                    </apex:column>
+                    
+                    <apex:column > 
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                Body
+                                <apex:outputText rendered="{!$ObjectType.Note.Fields.Body.InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Note.Fields.Body.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:inputField value="{!item.note.Body}" rendered="{!item.isEdit}"/>
+                        <apex:outputField value="{!item.note.Body}" rendered="{!!item.isEdit}"/>
+                    </apex:column>
+                    
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+                                <apex:commandLink action="{!Sort}" value="Owner {!IF(NotePagingInfo.OrderBy != 'Owner.Name', '', IF(NotePagingInfo.OrderDirection == 'ASC', '▲', '▼'))}" reRender="pnlForm" status="overlayStatus">
+                                    <apex:param name="orderBy" value="Owner.Name"/>
+                                    <apex:param name="orderDirection" value="{!IF(NotePagingInfo.OrderBy != 'Owner.Name', 'ASC', IF(NotePagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+                                </apex:commandLink>
+                                <apex:outputText rendered="{!$ObjectType.Note.Fields.OwnerId.InlineHelpText != null}">
+                                    <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Note.Fields.OwnerId.InlineHelpText}" alt="" src="/s.gif"/></span>
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:outputField value="{!item.note.Owner.Name}"/>
+                    </apex:column>
+                    
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputPanel >
+						    <apex:commandLink action="{!Sort}" value="Last Modified Date {!IF(NotePagingInfo.OrderBy != 'LastModifiedDate', '', IF(NotePagingInfo.OrderDirection == 'ASC', '▲', '▼'))}" reRender="pnlForm" status="overlayStatus">
+						        <apex:param name="orderBy" value="LastModifiedDate"/>
+						        <apex:param name="orderDirection" value="{!IF(NotePagingInfo.OrderBy != 'LastModifiedDate', 'ASC', IF(NotePagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}"/>
+						    </apex:commandLink>
+                            <apex:outputText rendered="{!$ObjectType.Note.Fields.LastModifiedDate.InlineHelpText != null}">
+                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Note.Fields.LastModifiedDate.InlineHelpText}" alt="" src="/s.gif"/></span>
+                            </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                        <apex:outputField value="{!item.note.LastModifiedDate}"/>
+                    </apex:column>
+                    
+                </apex:pageBlockTable>
+            </apex:outputPanel>
+            <p>
+                <c:Pagination pager="{!NotePagingInfo}" action="{!buildNoteWrapper}" rerender="pnlForm" status="overlayStatus"/>
+            </p>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

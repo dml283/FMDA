@@ -1,0 +1,8 @@
+<apex:page showHeader="true" standardController="fuseit_s2t__Trim_Record__c"  tabstyle="Trim_Records__tab">
+
+    <apex:sectionHeader title="Trim Record" subtitle="New / Edit Trim Record"/>
+    <apex:pageBlock title="Details">
+            <apex:outputLabel value="A Trim Record must be created from an existing Standard or Custom Object, or edited from the Trim Records Tab"></apex:outputLabel>
+    </apex:pageBlock>
+
+</apex:page>

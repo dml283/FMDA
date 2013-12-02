@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>Hierarchy</customSettingsType>
+    <customSettingsVisibility>Protected</customSettingsVisibility>
+    <description>Custom Settings for S2T connection per Org or User</description>
+    <enableEnhancedLookup>false</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Trim_Password__c</fullName>
+        <deprecated>false</deprecated>
+        <description>The Trim Password used to connect to Trim</description>
+        <externalId>false</externalId>
+        <label>Trim Password</label>
+        <length>255</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Trim_User_Name__c</fullName>
+        <deprecated>false</deprecated>
+        <description>The Trim User name used to log into Trim</description>
+        <externalId>false</externalId>
+        <label>Trim User Name</label>
+        <length>255</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Trim Login Details</label>
+</CustomObject>

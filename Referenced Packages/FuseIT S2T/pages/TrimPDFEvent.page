@@ -1,0 +1,10 @@
+<apex:page readOnly="true" standardController="Event" RenderAs="PDF">
+  <center>
+  <h1>PDF Event Snapshot</h1>
+     <apex:panelGrid columns="1" width="100%">
+        <apex:outputText value="{!Event.Who}"/>
+        <apex:outputText value="{!NOW()}"></apex:outputText>
+     </apex:panelGrid>
+  </center>
+<apex:detail subject="{!Event.Id}" relatedList="true" title="true"/> 
+</apex:page>

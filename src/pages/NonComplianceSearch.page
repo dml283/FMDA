@@ -1,0 +1,92 @@
+<apex:page controller="NonComplianceSearchController" showHeader="false" sideBar="false">
+    <script>
+        $(function(){
+            {!StartUpScript}
+        })
+       	function onAjaxStop() {
+            {!StartUpScript}
+        }
+    </script>
+    <c:CommonScripts ></c:CommonScripts>
+    
+    <c:PersonSearchScripts />
+    
+    <body class="hasMotif lookupTab  LookupSearchFrame  brandNoBgrImg">
+        <div class="lookup">
+            <div class="bPageTitle">
+                <div class="ptBody secondaryPalette">
+                    <div class="content"><img title="" class="pageTitleIcon" alt="" src="/s.gif"/>
+                        <h1>Lookup</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="pBody">
+            </div>
+        </div>
+        
+        <c:Overlay ></c:Overlay>
+        <apex:form id="pnlForm">
+            <apex:messages />
+            <apex:actionFunction name="Sort" action="{!Sort}" rerender="pnlForm" status="overlayStatus">
+                <apex:param name="sortByColumn" value="" assignTo="{!ItemPagingInfo.OrderBy}"/>
+                <apex:param name="sortDirection" value="" assignTo="{!ItemPagingInfo.OrderDirection}"/>
+       	 	</apex:actionFunction>
+            <apex:actionFunction name="Display" action="{!buildItems}" rerender="pnlForm" status="overlayStatus"/>
+            <apex:pageBlock title="Select Non-Compliance Issue" mode="edit" id="SearchInfo">
+                <apex:inputText value="{!KeyWord}"/>
+                <apex:commandButton value="Search" action="{!buildItems}" status="overlayStatus" rerender="pnlForm"/>
+            </apex:pageBlock>
+             <apex:outputPanel > 
+                Record per page&nbsp;&nbsp;
+                <apex:selectList label="Record per page " size="1" value="{!ItemPagingInfo.PageSize}" onchange="Display();">
+                    <apex:selectOptions value="{!numberItemPerPageOptions}"/>
+                </apex:selectList>
+            </apex:outputPanel>
+            
+            <br/>
+            <br/>
+            <apex:pageBlock mode="edit" id="SearchResults" title="Search Results">
+                    <apex:pageBlockSection >
+                        <apex:outputPanel rendered="{!NoMatches}">
+                            <p>
+                                No records found due to one of the following:
+                                <ul>
+                                    <li>There are no records of this type</li>
+                                    <li>You don't have permission to see any of the records</li>
+                                </ul>
+                            </p>
+                        </apex:outputPanel>
+                    </apex:pageBlockSection>
+                    <apex:outputPanel rendered="{!!NoMatches}" id="pnl-results">
+                        <apex:pageBlockTable value="{!Items}" var="item" >
+                            <apex:repeat var="f" value="{!AllComFieldSet['Non_Compliance'].Fields}">
+                                <apex:column >
+                                    <apex:facet name="header">
+                                    	<apex:outputPanel >
+                                            <apex:commandLink value="{!f.label} {!IF(ItemPagingInfo.OrderBy != f.FieldPath, '', IF(ItemPagingInfo.OrderDirection == 'ASC', '▲', '▼'))}" status="overlayStatus" rerender="SearchResults"
+                                                    onClick="Sort('{!f.FieldPath}','{!IF(ItemPagingInfo.OrderBy != f.FieldPath, 'ASC', IF(ItemPagingInfo.OrderDirection == 'ASC', 'DESC', 'ASC'))}');return false;"
+                                                    rendered="{!f.FieldPath != 'Offender__c' && f.FieldPath != 'Comments__c'}">
+                                            </apex:commandLink>
+                                            <apex:outputText value="{!f.label}" rendered="{!f.FieldPath == 'Offender__c' || f.FieldPath == 'Comments__c'}"/>
+                                            <apex:outputPanel rendered="{!f.FieldPath != 'RecordType.Name'}">
+                                                <apex:outputText rendered="{!$ObjectType.Non_Compliance__c.Fields[f.FieldPath].InlineHelpText != null}">
+                                                <span class="helpButton"><img class="helpOrb" title="{!$ObjectType.Non_Compliance__c.Fields[f.FieldPath].InlineHelpText}" alt="" src="/s.gif"/></span>
+                                            	</apex:outputText>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </apex:facet>
+                                    <apex:commandLink value="{!item[f]}" action="{!PickItem}" rendered="{!f.FieldPath == 'Name'}">
+                                        <apex:param name="itemId" value="{!item.Id}"/>
+                                    </apex:commandLink>
+                                    <apex:outputField value="{!item[f]}" rendered="{!f.FieldPath != 'Name'}"/>
+                                </apex:column>
+                            </apex:repeat>
+                        </apex:pageBlockTable>
+                        <p>
+                            <c:Pagination pager="{!ItemPagingInfo}" action="{!buildItems}" rerender="SearchResults" status="overlayStatus"/>
+                        </p>
+                    </apex:outputPanel>
+                </apex:pageBlock>
+        </apex:form>
+    </body>
+</apex:page>

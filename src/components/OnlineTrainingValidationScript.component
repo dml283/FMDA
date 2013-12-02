@@ -1,0 +1,293 @@
+<apex:component >
+     <script type="text/javascript">
+        var __sfdcSessionId = '{!GETSESSIONID()}';
+    </script>
+    
+    <script src="/soap/ajax/28.0/connection.js" type="text/javascript"></script>
+    
+    <script src="{!$Resource.Jquey_DataTable}" type="text/javascript"></script>
+    <style type="text/css">
+        tr.dataRow:hover td{background-color:#e3f3ff!important}
+        div.dataTables_info{float:left; padding:10px;}
+        div.dataTables_paginate{float:right; padding:10px;}
+        div.dataTables_paginate a{padding-left:20px;text-decoration:none; cursor:pointer} 
+        div.dataTables_paginate a.paginate_disabled_previous,
+        div.dataTables_paginate a.paginate_disabled_next
+        {color:grey;cursor:default;}
+        table.list.dataTable th.sorting_asc a:after{content:' ▲ '}
+        table.list.dataTable th.sorting_desc a:after{content:' ▼ '}
+        
+    </style>
+        
+    <script type="text/javascript">     
+    
+    function svcCalloutSearch(fadmsId)
+    {
+         $('#temp-overlay').show(100, function(){
+            try         
+            {    
+                // sforce.debug.log("Method called: svcCalloutSearch");        
+                //var fadmsId = document.getElementById('fadmsId').value;
+                
+                // sforce.debug.log("Before controller method " + "\n");
+                
+                RetrieveAgentTrainingDetailsController.getUserAttempts(fadmsId, handleAttemptsSearch);
+            }
+            catch (e)
+            {
+                var errorMsg = "An error occurred on this page:\n\n";
+    
+                errorMsg += "Error Description: " + e.message + "\n\n";
+                errorMsg += "Click OK to continue.\n\n";
+                alert(errorMsg);          
+            }
+        	$('#temp-overlay').hide();
+         });
+    }
+var globalevent;
+    function handleAttemptsSearch(result, event) 
+    {     
+        try         
+        {   
+            globalevent = event;
+            // sforce.debug.log("Method called: handleAttemptsSearch"); 
+            
+            // sforce.debug.log("event.type: " + event.type);
+            // sforce.debug.log("event.message: " + event.message);
+            // sforce.debug.log("event.status: " + event.status);
+            // sforce.debug.log("event.where: " + event.where);
+            $('#moodleTableData').empty(); 
+            $('.resultOutcome').text('');
+            //$('.saveButton').removeAttr("disabled");
+            if (event.type == 'exception')        
+            {              
+                // sforce.debug.log("exception block");             
+                //alert(event.message);
+                var tableData = "<p style=\"text-align:center;font-size:14px;color:red;\">&nbsp;&nbsp;&nbsp;" + event.message + "</p>";
+				$('#moodleTableData').append($(tableData));
+                //$('.saveButton').attr("disabled","disabled");
+                $('.saveButton').hide();
+            } 
+            else 
+            {              
+            	$('.saveButton').show();
+                // sforce.debug.log("success block");                         
+            	var ERR_USR_NO_GRADES  = 'No Grades currently exist for this user.';
+                var arrAttempts = result.trainingAttemptsInWrap;
+                // sforce.debug.log("Arraysize: " + arrAttempts.length);
+
+                // Display successful search
+                //document.getElementById('rsltMessage').innerHTML = 'Moodle data search successful';
+               
+                // Catchers
+                var attemptId = "";
+                var attemptNumber = 0;
+                var dateStarted = "";
+                var timeTaken = "";
+                var dateCompleted = "";
+                var marks = 0;
+                var grade = 0;
+                var gradeOutcome = "";
+
+                var startedDt = new Date();
+                var completedDt = new Date();
+                
+                //// sforce.debug.log("startedDt year: " + startedDt.getFullYear());
+                //// sforce.debug.log("startedDt: " + startedDt.getDate() + "-" + startedDt.getMonth() + "-" + startedDt.getFullYear());
+                
+                var temp = "";
+                var tblRow = "";  
+        
+                var tableData = "";
+        		
+                // Set class variable used to return display data
+                tableData = "<table class='list' cellpadding='2' cellspacing='2' border='1' width='100%'>";
+                tableData += "<thead class='rich-table-thead'><tr class='headerRow'><th class='headerRow'><a href='javascript:void(0)'>Attempt Number</a></th>";
+                tableData += "<th class='headerRow'><a href='javascript:void(0)'>Started</a></th>";
+                tableData += "<th class='headerRow'><a href='javascript:void(0)'>Completed</a></th>";
+                tableData += "<th class='headerRow'><a href='javascript:void(0)'>Time Taken</a></th>";
+                tableData += "<th class='headerRow'><a href='javascript:void(0)'>Marks</a></th>";
+                tableData += "<th class='headerRow'><a href='javascript:void(0)'>Grade%</a></th>";
+                tableData += "<th class='headerRow'><a href='javascript:void(0)'>Outcome</a></th></tr></thead>";
+                tableData += "<tbody>";
+                
+                        
+                // Loop thru our class list of training attempts and add an array item for each training record
+                for (i = 0; i < arrAttempts.length ; i++)
+                {                               
+                    attemptNumber = arrAttempts[i].attemptNumber;
+                    timeTaken = arrAttempts[i].timeTaken;
+                    marks = arrAttempts[i].marks;
+                    grade = arrAttempts[i].grade;
+                    gradeOutcome = arrAttempts[i].gradeOutcome;
+                    //dateStarted = arrAttempts[i].dateStarted;
+                    //dateCompleted = arrAttempts[i].dateCompleted;
+                    dateStarted = formatDate(arrAttempts[i].dateStarted);
+                    dateCompleted = formatDate(arrAttempts[i].dateCompleted);
+                    
+                    // sforce.debug.log("attemptNumber: " + attemptNumber);
+                    // sforce.debug.log("timeTaken: " + timeTaken);
+                    // sforce.debug.log("marks: " + marks);
+                    // sforce.debug.log("grade: " + grade);
+                    // sforce.debug.log("gradeOutcome: " + gradeOutcome);
+                    // sforce.debug.log("dateStarted: " + dateStarted);
+                    // sforce.debug.log("dateCompleted: " + dateCompleted);
+                    //// sforce.debug.log("startedDt: " + startedDt.getDate() + "-" + (startedDt.getMonth()+1) + "-" + startedDt.getFullYear());
+                    //// sforce.debug.log("completedDt: " + dateCompleted);
+                    // sforce.debug.log("------------------------");
+                    
+                    tblRow = "<tr class='dataRow "+(i%2 == 0 ? 'even ' : 'odd ') + (i == 1 ? 'first' : '') +"'>";
+                    tblRow += "<td class='dataCell'>";
+                    tblRow += attemptNumber;
+                    tblRow += '</td>';             
+        
+                    tblRow += "<td class='dataCell'>";
+                    tblRow += dateStarted;      
+                    tblRow += '</td>';             
+        
+                    tblRow += "<td class='dataCell'>";
+                    tblRow += dateCompleted;
+                    tblRow += '</td>';             
+        
+                    tblRow += "<td class='dataCell'>";
+                    tblRow += timeTaken;
+                    tblRow += '</td>';             
+        
+                    tblRow += "<td class='dataCell'>";
+                    tblRow += marks;
+                    tblRow += '</td>';             
+                    
+                    tblRow += "<td class='dataCell'>";
+                    tblRow += grade;
+                    tblRow += '</td>';               
+                    
+                    tblRow += "<td class='dataCell'>";
+                    tblRow += gradeOutcome;
+                    tblRow += '</td>'; 
+                    
+                    // close row            
+                    tblRow += '</tr>';                              
+                    
+                    tableData += tblRow;           
+                    
+                    // flush row
+                    tblRow = '';
+                }
+        		
+                // Close table
+                tableData += '</tbody></table>';
+                
+                //document.getElementById('moodleTableData').innerHTML = tableData;
+                if (result.userOutcomeInWrap != null) {
+                	$('.resultOutcome').text(result.userOutcomeInWrap);
+                }
+                if (result.userOutcomeInWrap == 'Passed') {
+                    $('.resultOutcome').css('color','green');
+                } else {
+                    $('.resultOutcome').css('color','red');
+                }
+                    /*if (isPassed) {
+                    $('.resultOutcome').text('Passed');
+                    $('.resultOutcome').css('color','green');
+                } else {
+                    $('.resultOutcome').text('Failed');
+                    $('.resultOutcome').css('color','red');
+				}*/
+                // $('.attempCount').text(arrAttempts.length);
+                $('.attempCount').text(result.userAttemptCountInWrap);
+                $('.userStatus').text(result.userStatusInWrap);
+                if (arrAttempts.length > 0) {
+                    $('#moodleTableData').append($(tableData));
+                    $('#moodleTableData table').dataTable({
+                        "bFilter": false,
+                        "bLengthChange": false,
+                        "iDisplayLength": 20,
+                        "oLanguage": {
+                            "sInfo": "Total Records: _TOTAL_ ",
+                            "oPaginate": {
+                                "sNext": "Next page <b>»</b>",
+                                "sPrevious": "<b>«</b> Previous page"
+                            }
+                        },
+                        "aaSorting": [[0,'asc']]
+                    });
+                    $('.dataTables_paginate').hide();
+                } else {
+                    tableData = "<p style=\"text-align:center;font-size:14px;color:red;\">&nbsp;&nbsp;&nbsp;" + ERR_USR_NO_GRADES + "</p>";
+					$('#moodleTableData').append($(tableData));
+                }
+            }
+        }
+        catch (e)
+        {
+            var errorMsg = "An error occurred on this page:\n\n";
+
+            errorMsg += "Error Description: " + e.message + "\n\n";
+            errorMsg += "Click OK to continue.\n\n";
+            alert(errorMsg);        
+        }
+        
+    }
+
+    function svcCalloutSave(fadmsId)
+    {
+        $('#temp-overlay').show(100, function(){
+            try         
+            {     
+                // sforce.debug.log("Method called: svcCalloutSave");         
+                //var fadmsId = document.getElementById('fadmsId').value;
+                
+                // Set html tablerow data (div)
+                //var tableData = document.getElementById('electorTableData');
+                //tableData.innerHTML = fadmsId;   
+                
+                RetrieveAgentTrainingDetailsController.upsertMoodleData(fadmsId, handleAttemptsSave);
+            }
+            catch (e)
+            {
+                var errorMsg = "An error occurred on this page:\n\n";
+    
+                errorMsg += "Error Description: " + e.message + "\n\n";
+                errorMsg += "Click OK to continue.\n\n";
+                alert(errorMsg);          
+            }
+            $('#temp-overlay').hide();
+        });
+    }
+
+    function handleAttemptsSave(result, event) 
+    {   
+        try         
+        {     
+            // sforce.debug.log("Method called: handleAttemptsSave");                 
+        
+            if (event.type == 'exception')        
+            {              
+                alert(event.message);
+            } 
+            else 
+            {                          
+                // document.getElementById('rsltMessage').innerHTML = 'Moodle data saved successfully';
+                top.window.opener.reloadOnlineTrainingSection();
+		        top.window.close();
+            }
+        }
+        catch (e)
+        {
+            var errorMsg = "An error occurred on this page:\n\n";
+
+            errorMsg += "Error Description: " + e.message + "\n\n";
+            errorMsg += "Click OK to continue.\n\n";
+            alert(errorMsg);          
+        }
+    }
+	
+    function formatDate(inDate) {
+        //        0123456789
+        // format 2013-07-01T14:10:54
+        var date = inDate.substring(8,10) + '/' + inDate.substring(5,7) + '/' + inDate.substring(0,4);
+        var time = inDate.substring(11,19);
+        return date + ' ' + time;
+    }
+    </script>
+</apex:component>

@@ -1,0 +1,28 @@
+<apex:page Controller="RetrieveAgentTrainingDetailsController" id="MoodlePage"  tabStyle="Account">
+
+    <c:CommonScripts ></c:CommonScripts>
+    <c:OnlineTrainingValidationScript />
+
+    <apex:sectionHeader title="Moodle REST Service 1" subtitle="Retrieve Agent Training Details"/>
+    
+    <apex:pageBlock id="SearchInputs" title="Moodle Search">
+          <table cellpadding="2" cellspacing="2">
+              <tr>
+                <td style="font-weight:bold;">FADMS ID<br/>
+                <input type="text" id="fadmsId"/>
+                </td>
+              </tr>
+          </table>
+        <p><button onclick="svcCalloutSearch('TISQLYJKKB0')">Search</button></p>
+        <p><button onclick="svcCalloutSave()">Save</button></p>        
+    </apex:pageBlock>   
+
+    <apex:pageBlock title="Results Summary">
+        <div id="rsltMessage"></div>
+    </apex:pageBlock>
+    <apex:pageBlock id="results" title="Moodle Search Results">   
+        <!--Display dynamically created table from service response-->
+        <div id="moodleTableData"></div>           
+    </apex:pageBlock>
+
+</apex:page>
